@@ -1,12 +1,487 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Homepage</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Trần Hoàng Tú — Senior Software Engineer • Full-Stack • AI • HL7 FHIR</title>
+  <meta name="description" content="Trần Hoàng Tú — Senior Software Engineer. .NET • Python • React • Microservices • AI • HL7 FHIR (JP). Building reliable systems and practical AI products." />
+  <meta name="theme-color" content="#0b1220" />
+
+  <!-- OpenGraph -->
+  <meta property="og:title" content="Trần Hoàng Tú — Senior Software Engineer" />
+  <meta property="og:description" content=".NET • Python • React • Microservices • AI • HL7 FHIR (JP)" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://tuth.site" />
+
+  <style>
+    :root{
+      --bg: #0b1220;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.085);
+      --text: rgba(255,255,255,.88);
+      --muted: rgba(255,255,255,.65);
+      --border: rgba(255,255,255,.12);
+      --accent: #79a6ff;
+      --accent2:#77f0d7;
+      --shadow: 0 16px 40px rgba(0,0,0,.35);
+      --ring: 0 0 0 3px rgba(121,166,255,.25);
+    }
+    [data-theme="light"]{
+      --bg: #f6f8fc;
+      --panel: rgba(15,23,42,.05);
+      --panel2: rgba(15,23,42,.08);
+      --text: rgba(15,23,42,.92);
+      --muted: rgba(15,23,42,.68);
+      --border: rgba(15,23,42,.12);
+      --accent: #2f66ff;
+      --accent2:#00b7a8;
+      --shadow: 0 18px 45px rgba(15,23,42,.12);
+      --ring: 0 0 0 3px rgba(47,102,255,.18);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 600px at 10% 10%, rgba(121,166,255,.25), transparent 50%),
+                  radial-gradient(900px 500px at 85% 35%, rgba(119,240,215,.18), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    a{ color: inherit; text-decoration:none; }
+    a:hover{ text-decoration: underline; text-underline-offset: 4px; }
+    .wrap{ max-width: 1100px; margin: 0 auto; padding: 28px 18px 80px; }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: blur(12px);
+      background: linear-gradient(to bottom, rgba(0,0,0,.18), rgba(0,0,0,0));
+      padding: 14px 0;
+    }
+    [data-theme="light"] .topbar{
+      background: linear-gradient(to bottom, rgba(246,248,252,.85), rgba(246,248,252,0));
+    }
+    .brand{ display:flex; gap:12px; align-items:center; }
+    .avatar{
+      width: 40px; height:40px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: var(--shadow);
+      display:grid; place-items:center; font-weight: 800;
+      color: rgba(0,0,0,.72);
+      user-select:none;
+    }
+    .brand h1{ font-size: 14px; margin:0; letter-spacing:.3px; }
+    .brand p{ margin:0; font-size: 12px; color: var(--muted); }
+
+    .nav{ display:flex; gap:14px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+    .nav a{ font-size: 13px; color: var(--muted); }
+    .nav a:hover{ color: var(--text); }
+    .btn{
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      padding: 9px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-size: 13px;
+      display:inline-flex; align-items:center; gap:8px;
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+    }
+    .btn:hover{ transform: translateY(-1px); background: var(--panel2); border-color: rgba(255,255,255,.22); }
+    [data-theme="light"] .btn:hover{ border-color: rgba(15,23,42,.2); }
+    .btn:focus{ outline:none; box-shadow: var(--ring); }
+
+    .hero{
+      margin-top: 22px;
+      display:grid; grid-template-columns: 1.4fr .6fr; gap: 18px;
+      align-items: stretch;
+    }
+    @media (max-width: 900px){ .hero{ grid-template-columns: 1fr; } }
+
+    .card{
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--panel), rgba(255,255,255,.03));
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+    .hero-main{ padding: 26px 22px; }
+    .hero-side{ padding: 18px 18px; display:flex; flex-direction:column; gap: 12px; }
+    .kicker{
+      display:inline-flex; align-items:center; gap:10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .dot{ width:8px; height:8px; border-radius:99px; background: var(--accent2); box-shadow: 0 0 0 4px rgba(119,240,215,.15); }
+    .headline{ margin: 10px 0 6px; font-size: 34px; line-height: 1.15; letter-spacing: -0.4px; }
+    .subhead{ margin: 0; color: var(--muted); max-width: 64ch; }
+
+    .chips{ display:flex; flex-wrap:wrap; gap: 10px; margin-top: 16px; }
+    .chip{
+      padding: 7px 10px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .cta{ display:flex; gap: 10px; flex-wrap:wrap; margin-top: 18px; }
+    .primary{
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: rgba(0,0,0,.78);
+      border: none;
+      font-weight: 700;
+    }
+    .primary:hover{ background: linear-gradient(135deg, var(--accent), var(--accent2)); }
+    .primary:focus{ box-shadow: 0 0 0 4px rgba(121,166,255,.22); }
+
+    .mini{
+      padding: 14px 14px;
+      border-radius: 16px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+    }
+    .mini h3{ margin:0 0 6px; font-size: 13px; }
+    .mini p{ margin:0; font-size: 13px; color: var(--muted); }
+    .mini a{ color: var(--text); }
+
+    section{ margin-top: 22px; }
+    .section-head{
+      display:flex; align-items:flex-end; justify-content:space-between; gap: 14px;
+      margin: 26px 4px 12px;
+    }
+    .section-head h2{ margin:0; font-size: 18px; letter-spacing: -0.2px; }
+    .section-head p{ margin:0; color: var(--muted); font-size: 13px; }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 14px;
+    }
+    .col-6{ grid-column: span 6; }
+    .col-4{ grid-column: span 4; }
+    .col-8{ grid-column: span 8; }
+    .col-12{ grid-column: span 12; }
+    @media (max-width: 900px){
+      .col-6,.col-4,.col-8{ grid-column: span 12; }
+    }
+
+    .proj{
+      padding: 16px 16px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--panel), rgba(255,255,255,.03));
+      transition: transform .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .proj:hover{ transform: translateY(-2px); background: var(--panel2); border-color: rgba(255,255,255,.22); }
+    [data-theme="light"] .proj:hover{ border-color: rgba(15,23,42,.2); }
+    .proj h3{ margin: 0 0 6px; font-size: 15px; }
+    .proj p{ margin: 0 0 10px; color: var(--muted); font-size: 13px; }
+    .meta{ display:flex; flex-wrap:wrap; gap: 10px; align-items:center; color: var(--muted); font-size: 12px; }
+    .pill{ padding: 4px 8px; border-radius: 999px; border: 1px solid var(--border); background: rgba(255,255,255,.03); }
+
+    .timeline{ padding: 18px 18px; }
+    .job{ display:flex; gap: 12px; padding: 14px 10px; border-radius: 14px; }
+    .job + .job{ border-top: 1px dashed var(--border); }
+    .job .mark{
+      width: 10px; height: 10px; border-radius: 99px;
+      background: var(--accent);
+      margin-top: 7px;
+      box-shadow: 0 0 0 4px rgba(121,166,255,.12);
+      flex: 0 0 auto;
+    }
+    .job h3{ margin:0; font-size: 14px; }
+    .job .when{ color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .job .what{ color: var(--muted); font-size: 13px; margin-top: 6px; }
+
+    .footer{
+      margin-top: 34px;
+      color: var(--muted);
+      font-size: 12px;
+      display:flex; justify-content:space-between; gap: 10px; flex-wrap:wrap;
+      padding: 0 4px;
+    }
+    code.kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      padding: 2px 6px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(0,0,0,.12);
+      color: var(--text);
+    }
+    [data-theme="light"] code.kbd{ background: rgba(15,23,42,.06); }
+  </style>
 </head>
+
 <body>
-  <h1>Welcome to My GitHub Page</h1>
-  <p>Visit my Markdown content <a href="https://tranhoangtu-it.github.io/tranhoangtu-it/">here</a>.</p>
+  <div class="wrap" id="top">
+    <div class="topbar">
+      <div class="brand">
+        <div class="avatar" aria-hidden="true">T</div>
+        <div>
+          <h1>Trần Hoàng Tú</h1>
+          <p>Senior Software Engineer • Full-Stack • AI • HL7 FHIR (JP)</p>
+        </div>
+      </div>
+
+      <div class="nav">
+        <a href="#projects">Projects</a>
+        <a href="#experience">Experience</a>
+        <a href="#contact">Contact</a>
+        <button class="btn" id="themeBtn" type="button" aria-label="Toggle theme">
+          <span id="themeIcon">🌙</span> Theme
+        </button>
+      </div>
+    </div>
+
+    <div class="hero">
+      <div class="card hero-main">
+        <div class="kicker"><span class="dot"></span><span>“change my life”</span></div>
+        <h2 class="headline">Xây hệ thống bền, nhanh, và có “độ sâu” kỹ thuật.</h2>
+        <p class="subhead">
+          Tôi tập trung vào <b>.NET</b>, <b>Python</b>, <b>React</b>, microservices, và các bài toán AI áp dụng thực tế.
+          Điểm mạnh: kiến trúc sạch, tối ưu performance, quy trình delivery, và tích hợp chuẩn y tế <b>HL7 FHIR</b> cho thị trường Nhật.
+        </p>
+
+        <div class="chips" aria-label="Key skills">
+          <span class="chip">.NET • C# • Microservices</span>
+          <span class="chip">Python • Automation • Data</span>
+          <span class="chip">React • TypeScript • UI</span>
+          <span class="chip">AI/LLM • Agents • Tooling</span>
+          <span class="chip">HL7 FHIR (JP) • Healthcare</span>
+          <span class="chip">AWS/Azure • Docker • CI/CD</span>
+        </div>
+
+        <div class="cta">
+          <a class="btn primary" href="#projects">Xem Projects</a>
+          <a class="btn" href="https://github.com/tranhoangtu-it" target="_blank" rel="noreferrer">GitHub</a>
+          <a class="btn" href="https://www.linkedin.com/in/tutranhoang-it" target="_blank" rel="noreferrer">LinkedIn</a>
+          <a class="btn" href="mailto:tranhoangtu.it@gmail.com">Email</a>
+        </div>
+      </div>
+
+      <div class="card hero-side">
+        <div class="mini">
+          <h3>Hiện tại</h3>
+          <p>
+            Tập trung nâng cấp năng lực “AI-first development”: workflow tự động hoá, agent tooling,
+            và các sản phẩm AI chạy local/edge.
+          </p>
+        </div>
+        <div class="mini">
+          <h3>Định hướng</h3>
+          <p>
+            Làm ra sản phẩm: <b>nhanh</b> (delivery), <b>đúng</b> (quality), <b>rộng</b> (scale),
+            và <b>chuẩn</b> (standards/compliance).
+          </p>
+        </div>
+        <div class="mini">
+          <h3>Base</h3>
+          <p>Hanoi, Viet Nam • Domain: <a href="https://tuth.site">tuth.site</a></p>
+        </div>
+      </div>
+    </div>
+
+    <section id="projects">
+      <div class="section-head">
+        <div>
+          <h2>Selected Projects</h2>
+          <p>Những repo thể hiện rõ hướng đi: AI agents, trading, healthcare FHIR, automation.</p>
+        </div>
+        <p>Tip: nhấn vào card để mở repo</p>
+      </div>
+
+      <div class="grid">
+        <a class="proj col-6" href="https://github.com/tranhoangtu-it/openbot" target="_blank" rel="noreferrer">
+          <h3>openbot</h3>
+          <p>Bot/automation hướng “agentic”: tập trung vào tính gọn, rõ, và mở rộng được.</p>
+          <div class="meta">
+            <span class="pill">Go</span>
+            <span class="pill">Automation</span>
+            <span class="pill">CLI/Services</span>
+          </div>
+        </a>
+
+        <a class="proj col-6" href="https://github.com/tranhoangtu-it/coin-futures-bot" target="_blank" rel="noreferrer">
+          <h3>coin-futures-bot</h3>
+          <p>Pipeline trading multi-coin (Futures): crawl → backtest → tuning → dashboard.</p>
+          <div class="meta">
+            <span class="pill">Python</span>
+            <span class="pill">Trading</span>
+            <span class="pill">Backtest</span>
+          </div>
+        </a>
+
+        <a class="proj col-4" href="https://github.com/tranhoangtu-it/vietlott-predictor" target="_blank" rel="noreferrer">
+          <h3>vietlott-predictor</h3>
+          <p>Thử nghiệm ML/ensemble & dashboard hoá dự đoán.</p>
+          <div class="meta">
+            <span class="pill">ML</span>
+            <span class="pill">Python</span>
+          </div>
+        </a>
+
+        <a class="proj col-4" href="https://github.com/tranhoangtu-it/fhir-validator-app" target="_blank" rel="noreferrer">
+          <h3>fhir-validator-app</h3>
+          <p>App hỗ trợ validate JSON theo cấu hình FHIR (chuẩn hoá & kiểm tra nhanh).</p>
+          <div class="meta">
+            <span class="pill">HL7 FHIR</span>
+            <span class="pill">HTML</span>
+          </div>
+        </a>
+
+        <a class="proj col-4" href="https://github.com/tranhoangtu-it/translate-tools" target="_blank" rel="noreferrer">
+          <h3>translate-tools</h3>
+          <p>Tooling dịch/automation: hướng “productivity-first”.</p>
+          <div class="meta">
+            <span class="pill">Tooling</span>
+            <span class="pill">Automation</span>
+          </div>
+        </a>
+
+        <a class="proj col-6" href="https://github.com/tranhoangtu-it/openclaw" target="_blank" rel="noreferrer">
+          <h3>openclaw (fork)</h3>
+          <p>Personal AI assistant đa nền tảng — nền móng để build assistant chạy local.</p>
+          <div class="meta">
+            <span class="pill">TypeScript</span>
+            <span class="pill">AI Agent</span>
+          </div>
+        </a>
+
+        <a class="proj col-6" href="https://github.com/tranhoangtu-it/nanobot" target="_blank" rel="noreferrer">
+          <h3>nanobot (fork)</h3>
+          <p>Exploration: ultra-lightweight bot framework, tập trung vào extensibility.</p>
+          <div class="meta">
+            <span class="pill">Python</span>
+            <span class="pill">Agents</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <section id="experience">
+      <div class="section-head">
+        <div>
+          <h2>Experience</h2>
+          <p>Track record: enterprise systems, lead/team coordination, healthcare & finance domains.</p>
+        </div>
+      </div>
+
+      <div class="card timeline">
+        <div class="job">
+          <div class="mark"></div>
+          <div>
+            <h3>OmiNext — Senior Software Engineer</h3>
+            <div class="when">Oct 2023 → Present • Healthcare products for Japan (.NET stack)</div>
+            <div class="what">
+              Requirement → design → implementation → code review. Microservices, .NET, React, data stores, cloud.
+              Tập trung: chất lượng giao hàng và nâng năng lực team.
+            </div>
+          </div>
+        </div>
+
+        <div class="job">
+          <div class="mark"></div>
+          <div>
+            <h3>FiinGroup — Senior Software Engineer</h3>
+            <div class="when">Mar 2022 → Sep 2023 • Financial research & trading info platforms</div>
+            <div class="what">
+              Xây tính năng web enterprise, tối ưu UX & performance, làm việc với dữ liệu lớn và hệ thống search.
+            </div>
+          </div>
+        </div>
+
+        <div class="job">
+          <div class="mark"></div>
+          <div>
+            <h3>FPT — Senior/Team Lead/Tech Lead</h3>
+            <div class="when">Jan 2018 → Mar 2022 • ERP, integration, modernization (VB6 → VB.NET)</div>
+            <div class="what">
+              Dẫn dắt triển khai module ERP, tích hợp hoá đơn điện tử/bank/3rd-party, và dự án migrate công nghệ.
+            </div>
+          </div>
+        </div>
+
+        <div class="job">
+          <div class="mark"></div>
+          <div>
+            <h3>3S IntersSoft — Junior Software Engineer</h3>
+            <div class="when">Dec 2016 → Jan 2018</div>
+            <div class="what">
+              Thực chiến delivery: kế hoạch, dev/test, làm hệ thống quản lý cho khách hàng.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact">
+      <div class="section-head">
+        <div>
+          <h2>Contact</h2>
+          <p>Muốn hợp tác/trao đổi: cứ bắn thẳng vào email hoặc LinkedIn.</p>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card col-8" style="padding:18px 18px;">
+          <p style="margin:0 0 10px; color:var(--muted);">
+            Ưu tiên chủ đề: AI agent tooling, healthcare HL7 FHIR (JP), platform/backend performance, DevEx automation.
+          </p>
+          <div class="cta">
+            <a class="btn primary" href="mailto:tranhoangtu.it@gmail.com">tranhoangtu.it@gmail.com</a>
+            <a class="btn" href="https://www.linkedin.com/in/tutranhoang-it" target="_blank" rel="noreferrer">LinkedIn</a>
+            <a class="btn" href="https://github.com/tranhoangtu-it" target="_blank" rel="noreferrer">GitHub</a>
+          </div>
+          <p style="margin:12px 0 0; color:var(--muted); font-size:12px;">
+            Pro tip: bookmark <code class="kbd">/</code> để search repo nhanh trên GitHub.
+          </p>
+        </div>
+
+        <div class="card col-4" style="padding:18px 18px;">
+          <h3 style="margin:0 0 8px; font-size:14px;">Quick Links</h3>
+          <p style="margin:0; color:var(--muted); font-size:13px;">
+            • Domain: <a href="https://tuth.site">tuth.site</a><br/>
+            • GitHub: <a href="https://github.com/tranhoangtu-it">tranhoangtu-it</a><br/>
+            • Repo Pages: <a href="https://github.com/tranhoangtu-it/tranhoangtu-it.github.io">tranhoangtu-it.github.io</a>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer">
+      <div>© <span id="year"></span> Trần Hoàng Tú • Built on GitHub Pages</div>
+      <div><a href="#top">Back to top ↑</a></div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const root = document.documentElement;
+      const btn = document.getElementById('themeBtn');
+      const icon = document.getElementById('themeIcon');
+      const year = document.getElementById('year');
+      year.textContent = new Date().getFullYear();
+
+      const saved = localStorage.getItem('theme');
+      const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+
+      function apply(theme){
+        root.setAttribute('data-theme', theme);
+        icon.textContent = theme === 'light' ? '☀️' : '🌙';
+        localStorage.setItem('theme', theme);
+      }
+
+      apply(saved || (prefersLight ? 'light' : 'dark'));
+
+      btn.addEventListener('click', () => {
+        const current = root.getAttribute('data-theme') || 'dark';
+        apply(current === 'dark' ? 'light' : 'dark');
+      });
+    })();
+  </script>
 </body>
 </html>
