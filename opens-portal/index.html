@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>openS Operations Center</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;color:#00ff41;font-family:'Courier New',monospace;overflow-x:hidden;min-height:100vh}
+.scanline{position:fixed;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,65,.03) 2px,rgba(0,255,65,.03) 4px);pointer-events:none;z-index:1000}
+.crt{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999}
+.crt::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.6) 100%)}
+#terminal{max-width:900px;margin:0 auto;padding:20px;position:relative;z-index:1}
+.header{border:1px solid #00ff41;padding:10px;text-align:center;margin-bottom:20px;font-size:14px;text-shadow:0 0 10px #00ff41}
+.header h1{font-size:20px;margin-bottom:5px}
+.line{margin:3px 0;opacity:0;animation:fadeIn .05s forwards}
+.prompt{color:#ff6347}
+.classified{color:#ff0000;text-shadow:0 0 5px #ff0000}
+.success{color:#00ff41}
+.dim{color:#555}
+.blink{animation:blink 1s infinite}
+@keyframes fadeIn{to{opacity:1}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes glitch{0%{transform:translate(0)}20%{transform:translate(-2px,2px)}40%{transform:translate(-2px,-2px)}60%{transform:translate(2px,2px)}80%{transform:translate(2px,-2px)}100%{transform:translate(0)}}
+.glitch{animation:glitch .3s infinite}
+.glitch-text{position:relative}
+.glitch-text::before,.glitch-text::after{content:attr(data-text);position:absolute;top:0;left:0}
+.glitch-text::before{color:#ff0000;clip-path:inset(0 0 65% 0);animation:glitch .5s infinite}
+.glitch-text::after{color:#0000ff;clip-path:inset(35% 0 0 0);animation:glitch .5s infinite reverse}
+#cursor{display:inline-block;width:10px;height:16px;background:#00ff41;animation:blink .7s infinite}
+.plan-row{display:flex;gap:10px;margin:2px 0}
+.plan-row .code{min-width:80px}
+.plan-row .status{min-width:30px}
+.plan-row .desc{flex:1}
+a{color:#00ff41;text-decoration:none}
+a:hover{text-shadow:0 0 10px #00ff41}
+.easter-egg{display:none;text-align:center;padding:40px;font-size:24px;color:#ff6347;text-shadow:0 0 20px #ff6347}
+.matrix-bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;opacity:.05}
+.matrix-bg canvas{width:100%;height:100%}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="crt"></div>
+<div class="matrix-bg"><canvas id="matrix"></canvas></div>
+
+<div id="terminal">
+<div class="header">
+<h1>&#9608;&#9608; openS OPERATIONS CENTER &#9608;&#9608;</h1>
+<div>SECURE TERMINAL v2.6 | CLASSIFICATION: PUBLIC</div>
+<div class="dim">Established: July 2024 | Agent: T. | Status: ACTIVE</div>
+</div>
+<div id="output"></div>
+<div style="margin-top:10px"><span class="prompt">agent@openS:~$ </span><span id="cursor"></span></div>
+</div>
+
+<div id="egg" class="easter-egg"></div>
+
+<script>
+const O=document.getElementById('output');
+const plans=[
+{c:'A',s:'🟢',d:'The genesis. Where it all began.',cl:'declassified',u:'openS-Plan-A'},
+{c:'B',s:'🟢',d:'Digital signatures in the shadows.',cl:'declassified',u:'openS-Plan-B'},
+{c:'C',s:'🟢',d:'Testing the boundaries.',cl:'declassified',u:'openS-Plan-C'},
+{c:'D',s:'🟢',d:'Copilot online. Training complete.',cl:'declassified',u:'openS-Plan-D'},
+{c:'E',s:'🔴',d:'████████ Core medical intel ████████',cl:'classified',u:null},
+{c:'F',s:'🟢',d:'Trust, but verify. Always verify.',cl:'declassified',u:'openS-Plan-F'},
+{c:'G',s:'🔴',d:'████████ Eastern alliance ████████',cl:'classified',u:null},
+{c:'H',s:'🟢',d:'Strategy and formation.',cl:'declassified',u:'openS-Plan-H'},
+{c:'I',s:'🟢',d:'Luck is just a variable.',cl:'declassified',u:'openS-Plan-I'},
+{c:'J',s:'🔴',d:'████████ Autonomous operative ████████',cl:'classified',u:null},
+{c:'K',s:'🟢',d:'Salty, shalty, but never wrong.',cl:'declassified',u:'openS-Plan-K'},
+{c:'L',s:'🟢',d:'Breaking language barriers.',cl:'declassified',u:'openS-Plan-L'},
+{c:'M',s:'🔴',d:'████████ Silent operations ████████',cl:'classified',u:null},
+{c:'N',s:'🟢',d:'Every repo has a story.',cl:'declassified',u:'openS-Plan-N'},
+{c:'O',s:'🟢',d:'Verify everything.',cl:'declassified',u:'openS-Plan-O'},
+{c:'P',s:'🟢',d:'Every PR tells a story.',cl:'declassified',u:'openS-Plan-P'},
+{c:'Q',s:'🟢',d:'Every token has a price.',cl:'declassified',u:'openS-Plan-Q'},
+{c:'R',s:'🟢',d:'All protocols converge here.',cl:'declassified',u:'openS-Plan-R'},
+{c:'S',s:'🟢',d:'Watching the watchers.',cl:'declassified',u:'openS-Plan-S'},
+{c:'T',s:'🔴',d:'████████ Medical backbone ████████',cl:'classified',u:null},
+{c:'U',s:'🔴',d:'████████ Signal relay ████████',cl:'classified',u:null},
+{c:'V',s:'🔴',d:'████████ Final templates ████████',cl:'classified',u:null}
+];
+
+let delay=0;
+const BASE='https://github.com/tranhoangtu-it/';
+
+function addLine(html,cls='',d=80){
+delay+=d;
+setTimeout(()=>{
+const div=document.createElement('div');
+div.className='line '+(cls||'');
+div.innerHTML=html;
+div.style.animationDelay='0s';
+O.appendChild(div);
+window.scrollTo(0,document.body.scrollHeight);
+},delay);
+}
+
+function addTyping(text,cls='',d=80){
+delay+=d;
+setTimeout(()=>{
+const div=document.createElement('div');
+div.className='line '+(cls||'');
+O.appendChild(div);
+let i=0;
+const interval=setInterval(()=>{
+if(i<text.length){div.textContent+=text[i];i++}
+else clearInterval(interval);
+},20);
+window.scrollTo(0,document.body.scrollHeight);
+},delay);
+}
+
+addLine('<span class="prompt">[SYSTEM]</span> Initializing secure connection...','',0);
+addTyping('> Authenticating Agent T. credentials...');
+addLine('<span class="success">✓ Authentication successful. Welcome back, Agent.</span>','',600);
+addLine('','',200);
+addLine('<span class="prompt">[SYSTEM]</span> Loading operation manifest...','',200);
+addLine('','',300);
+addLine('╔══════╦════╦══════════════════════════════════════════╗');
+addLine('║ CODE ║ ST ║ MISSION BRIEF                            ║');
+addLine('╠══════╬════╬══════════════════════════════════════════╣');
+
+plans.forEach(p=>{
+const code=('Plan '+p.c).padEnd(5);
+const link=p.u?`<a href="${BASE}${p.u}" target="_blank">${p.d}</a>`:`<span class="classified">${p.d}</span>`;
+addLine(`║ ${code}║ ${p.s} ║ ${link}`,p.cl==='classified'?'':'',40);
+});
+
+addLine('╚══════╩════╩══════════════════════════════════════════╝','',40);
+addLine('','',100);
+addLine(`<span class="dim">Total: 22 plans | Declassified: 15 | Classified: 7</span>`);
+addLine(`<span class="dim">Clearance required for classified plans: OMEGA</span>`);
+addLine('','',100);
+addLine('<span class="prompt">[INTEL]</span> Contribution surveillance active.');
+addLine('<span class="prompt">[INTEL]</span> All frequencies monitored. All plans operational.');
+addLine('','',100);
+addTyping('> "In the world of open source, nothing is truly hidden."');
+addLine('<span class="dim">                              — Agent T., 2026</span>','',600);
+addLine('','',200);
+addLine('<span class="dim">// Hint: Those who know the code, know the way. ↑↑↓↓←→←→BA</span>');
+
+// Matrix rain background
+const canvas=document.getElementById('matrix');
+const ctx=canvas.getContext('2d');
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+const cols=Math.floor(canvas.width/14);
+const drops=Array(cols).fill(1);
+const chars='openSPlanABCDEFGHIJKLMNOPQRSTUV01'.split('');
+function drawMatrix(){
+ctx.fillStyle='rgba(10,10,10,0.05)';
+ctx.fillRect(0,0,canvas.width,canvas.height);
+ctx.fillStyle='#00ff41';
+ctx.font='14px monospace';
+drops.forEach((y,i)=>{
+const t=chars[Math.floor(Math.random()*chars.length)];
+ctx.fillText(t,i*14,y*14);
+if(y*14>canvas.height&&Math.random()>.975)drops[i]=0;
+drops[i]++;
+});
+}
+setInterval(drawMatrix,50);
+window.addEventListener('resize',()=>{canvas.width=innerWidth;canvas.height=innerHeight});
+
+// Konami Code Easter Egg
+const konami=[38,38,40,40,37,39,37,39,66,65];
+let ki=0;
+document.addEventListener('keydown',e=>{
+if(e.keyCode===konami[ki]){ki++;
+if(ki===konami.length){
+ki=0;
+document.getElementById('terminal').style.display='none';
+const egg=document.getElementById('egg');
+egg.style.display='block';
+egg.innerHTML=`
+<div style="font-size:40px;margin-bottom:20px">🔓 ACCESS LEVEL: OMEGA</div>
+<div style="font-size:16px;color:#00ff41;margin-bottom:30px">FULL DECODER ACTIVATED</div>
+<table style="margin:0 auto;text-align:left;border-collapse:collapse">
+<tr><th style="padding:5px 15px;border-bottom:1px solid #333">Plan</th><th style="padding:5px 15px;border-bottom:1px solid #333">Original Codename</th><th style="padding:5px 15px;border-bottom:1px solid #333">Mission</th></tr>
+${[['A','tranhoangtu-it','Personal HQ'],['B','zsign-web','Digital Signatures'],['C','testing-center','Proving Ground'],['D','skills-copilot','Training Academy'],['E','[REDACTED]','Medical Intel'],['F','fhir-validator-app','Verification Unit'],['G','[REDACTED]','Eastern Alliance'],['H','football-team-manager','Tactical Formation'],['I','vietlott-predictor','Probability Lab'],['J','[REDACTED]','Autonomous Ops'],['K','Shalty-Number','Crypto Numbers'],['L','rt-translator','Babel Protocol'],['M','[REDACTED]','Ghost Division'],['N','Repo-Archaeologist','Historical Recovery'],['O','AI-Hallucination-FW','Reality Wall'],['P','PR-Risk-Scorer','Threat Assessment'],['Q','AI-Cost-Profiler','Financial Surveillance'],['R','mcpman','Protocol Hub'],['S','agentlens-observe','Counter-Surveillance'],['T','[REDACTED]','Data Backbone'],['U','[REDACTED]','Signal Relay'],['V','[REDACTED]','Blueprint Vault']].map(r=>`<tr><td style="padding:4px 15px;color:#ff6347">${r[0]}</td><td style="padding:4px 15px">${r[1]}</td><td style="padding:4px 15px;color:#888">${r[2]}</td></tr>`).join('')}
+</table>
+<div style="margin-top:30px;color:#555;font-size:12px">Press ESC to return to terminal</div>`;
+}}else ki=0;
+if(e.keyCode===27&&document.getElementById('egg').style.display==='block'){
+document.getElementById('egg').style.display='none';
+document.getElementById('terminal').style.display='block';
+}
+});
+</script>
+</body>
+</html>
