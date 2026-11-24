@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    try {
+      const saved = localStorage.getItem("color-scheme");
+      if (saved) document.querySelector('meta[name="color-scheme"]').content = saved;
+    } catch {}
+  </script>
+  <title>TallyPrime &amp; Legacy Tally.ERP 9 Cloud Sync &amp; Group MIS Console</title>
+  <meta name="description" content="Bi-directional TDL XML/ODBC Cloud Sync Console for multi-company TallyPrime and Legacy Tally.ERP 9 groups with automated inter-company ledger reconciliation and Power BI/Excel connectors.">
+  <style>
+    :root {
+      --bg: light-dark(#f8fafc, #090d16);
+      --surface: light-dark(#ffffff, #111827);
+      --surface-alt: light-dark(#f1f5f9, #1e293b);
+      --text: light-dark(#0f172a, #f8fafc);
+      --muted: light-dark(#475569, #94a3b8);
+      --border: light-dark(#cbd5e1, #334155);
+      --accent: light-dark(#0284c7, #38bdf8);
+      --accent-soft: light-dark(#e0f2fe, #0c4a6e);
+      --ok-bg: light-dark(#dcfce7, #064e3b);
+      --ok-fg: light-dark(#166534, #6ee7b7);
+      --warn-bg: light-dark(#fef3c7, #78350f);
+      --warn-fg: light-dark(#92400e, #fcd34d);
+      --err-bg: light-dark(#fee2e2, #7f1d1d);
+      --err-fg: light-dark(#991b1b, #fca5a5);
+      color-scheme: light dark;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.5;
+    }
+    .wrap { max-inline-size: 1240px; margin-inline: auto; padding: 1.35rem 1.25rem 3rem; }
+    .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    a:hover { text-decoration: underline; }
+    .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    button, select, input {
+      font: inherit; border-radius: 0.55rem; border: 1px solid var(--border);
+      padding: 0.48rem 0.8rem; background: var(--surface-alt); color: var(--text);
+    }
+    button { cursor: pointer; font-weight: 600; }
+    button.primary { background: var(--accent); color: #fff; border-color: transparent; }
+    button.success { background: var(--ok-fg); color: var(--bg); border-color: transparent; }
+    .tabs { display: flex; gap: 0.45rem; flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 0.65rem; margin-bottom: 1rem; }
+    .tab-btn { background: transparent; border: 1px solid transparent; color: var(--muted); padding: 0.46rem 0.88rem; }
+    .tab-btn.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 0.9rem; padding: 1.15rem; margin-bottom: 1rem; }
+    .entity-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(265px, 1fr)); gap: 0.85rem; margin-bottom: 1rem; }
+    .entity-card { background: var(--surface); border: 1px solid var(--border); border-radius: 0.85rem; padding: 0.95rem 1.05rem; position: relative; }
+    .entity-card h3 { margin: 0.25rem 0 0.15rem; font-size: 1rem; }
+    .kpi-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+    .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 0.8rem; padding: 0.85rem 1rem; }
+    .kpi strong { display: block; font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+    .kpi span { font-size: 0.8rem; color: var(--muted); }
+    .badge { display: inline-block; padding: 0.16rem 0.54rem; border-radius: 999px; font-size: 0.74rem; font-weight: 700; }
+    .badge.ok { background: var(--ok-bg); color: var(--ok-fg); }
+    .badge.warn { background: var(--warn-bg); color: var(--warn-fg); }
+    .badge.err { background: var(--err-bg); color: var(--err-fg); }
+    .badge.info { background: var(--accent-soft); color: var(--accent); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.89rem; }
+    th, td { text-align: left; padding: 0.62rem 0.65rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    th { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    pre {
+      background: var(--surface-alt); border: 1px solid var(--border); border-radius: 0.7rem;
+      padding: 0.95rem; overflow-x: auto; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.81rem; line-height: 1.48; margin: 0.5rem 0 0;
+    }
+    .split { display: grid; grid-template-columns: 1.35fr 1fr; gap: 1rem; }
+    @media (max-width: 900px) { .split { grid-template-columns: 1fr; } }
+    .toast {
+      position: fixed; bottom: 1.2rem; right: 1.2rem; background: var(--text); color: var(--bg);
+      padding: 0.65rem 1rem; border-radius: 0.6rem; font-size: 0.85rem; font-weight: 600;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s ease; z-index: 50;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar">
+      <div>
+        <a href="/demos/">← All Interactive Demos</a>
+        <h1 style="margin:0.25rem 0 0;font-size:1.46rem;">🔄 TallyPrime + Legacy Tally.ERP 9 Cloud Sync &amp; Group MIS Console</h1>
+        <p style="margin:0.2rem 0 0;color:var(--muted);font-size:0.9rem;">
+          Bi-Directional TDL XML &amp; ODBC Incremental <code>ALTERID</code> Sync across <strong>4 Group Companies</strong> · Auto Inter-Company Ledger Reconciliation · Power BI / Excel Warehouse Ready.
+        </p>
+      </div>
+      <div class="actions">
+        <button id="themeBtn" type="button">🌓 Theme</button>
+        <button id="syncCycleBtn" class="primary" type="button">⚡ Run Delta Sync Cycle</button>
+        <button id="exportCsvBtn" type="button">⬇ Export Group MIS &amp; Vouchers CSV</button>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="Tally Cloud Sync Views">
+      <button class="tab-btn active" data-tab="overview" type="button">🏢 4-Entity Live Sync &amp; Voucher Simulator</button>
+      <button class="tab-btn" data-tab="recon" type="button">⚖️ Inter-Company Ledger Reconciliation (<span id="openVarCount">3</span>)</button>
+      <button class="tab-btn" data-tab="tdl" type="button">🧩 TDL XML Push/Pull Snippet (Prime &amp; ERP 9)</button>
+      <button class="tab-btn" data-tab="bi" type="button">📊 Power BI / Excel ODBC Cloud Config</button>
+    </nav>
+
+    <!-- TAB 1: LIVE SYNC & VOUCHERS -->
+    <div id="tab-overview" class="tab-pane active">
+      <div class="kpi-bar">
+        <div class="kpi"><strong id="kpiRevenue">₹14,82,40,000</strong><span>Consolidated Group Sales (FYTD)</span></div>
+        <div class="kpi"><strong id="kpiPayables">₹8,94,15,000</strong><span>Consolidated Purchases &amp; COGS</span></div>
+        <div class="kpi"><strong id="kpiNetCash" style="color:var(--ok-fg);">₹3,18,65,000</strong><span>Group Bank &amp; Cash Position</span></div>
+        <div class="kpi"><strong id="kpiVouchers">12,488</strong><span>Synced Vouchers (Zero Duplicates)</span></div>
+        <div class="kpi"><strong id="kpiVariance" style="color:var(--warn-fg);">₹2,19,500</strong><span>Unreconciled Inter-Co Variance</span></div>
+      </div>
+
+      <div id="entityGrid" class="entity-grid"></div>
+
+      <div class="split">
+        <section class="panel" style="overflow-x:auto;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.6rem;margin-bottom:0.75rem;">
+            <h2 style="margin:0;font-size:1.03rem;">📜 Live Bi-Directional Voucher Stream (6 Core Tally Voucher Types)</h2>
+            <div style="display:flex;gap:0.45rem;flex-wrap:wrap;">
+              <select id="filterEntity">
+                <option value="ALL">All 4 Group Entities</option>
+                <option value="ENT-01">Apex Manufacturing (TallyPrime 4.1)</option>
+                <option value="ENT-02">Apex Logistics LLP (TallyPrime 3.0)</option>
+                <option value="ENT-03">Vanguard Retail (Tally.ERP 9 Rel 6.6)</option>
+                <option value="ENT-04">Apex SEZ Exports (Tally.ERP 9 Rel 6.5)</option>
+              </select>
+              <select id="filterType">
+                <option value="ALL">All Voucher Types</option>
+                <option value="Sales">Sales</option>
+                <option value="Purchase">Purchase</option>
+                <option value="Receipt">Receipt</option>
+                <option value="Payment">Payment</option>
+                <option value="Journal">Journal</option>
+                <option value="Stock Transfer">Stock Transfer</option>
+              </select>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>GUID / Voucher #</th>
+                <th>Entity &amp; Tally Build</th>
+                <th>Type</th>
+                <th>Party / Counter-Ledger</th>
+                <th class="num">Amount (₹)</th>
+                <th class="num">ALTERID</th>
+                <th>Direction</th>
+              </tr>
+            </thead>
+            <tbody id="voucherBody"></tbody>
+          </table>
+        </section>
+
+        <section class="panel">
+          <h2 style="margin:0 0 0.35rem;font-size:1.03rem;">🧪 Live Bi-Directional Voucher Simulator</h2>
+          <p style="margin:0 0 0.85rem;font-size:0.82rem;color:var(--muted);">
+            Test pushing a Cloud ERP/CRM voucher into Tally XML or pulling a local branch Tally.ERP 9 entry up to PostgreSQL Cloud Warehouse.
+          </p>
+          <form id="simVoucherForm" style="display:grid;gap:0.65rem;">
+            <label style="font-size:0.82rem;font-weight:600;">
+              Target Group Entity
+              <select id="simEntity" style="width:100%;margin-top:0.25rem;">
+                <option value="ENT-01">Apex Manufacturing Pvt Ltd (TallyPrime 4.1 · Port 9000)</option>
+                <option value="ENT-02">Apex Logistics &amp; Warehousing LLP (TallyPrime 3.0 · Port 9002)</option>
+                <option value="ENT-03">Vanguard Retail Distributors (Legacy Tally.ERP 9 · Port 9009)</option>
+                <option value="ENT-04">Apex SEZ Exports Unit (Legacy Tally.ERP 9 · Port 9012)</option>
+              </select>
+            </label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;">
+              <label style="font-size:0.82rem;font-weight:600;">
+                Voucher Type
+                <select id="simVchType" style="width:100%;margin-top:0.25rem;">
+                  <option value="Sales">Sales</option>
+                  <option value="Purchase">Purchase</option>
+                  <option value="Receipt">Receipt</option>
+                  <option value="Payment">Payment</option>
+                  <option value="Journal">Journal</option>
+                  <option value="Stock Transfer">Stock Transfer</option>
+                </select>
+              </label>
+              <label style="font-size:0.82rem;font-weight:600;">
+                Sync Direction
+                <select id="simDir" style="width:100%;margin-top:0.25rem;">
+                  <option value="PULL (Tally → Cloud)">PULL (Tally → Cloud DB)</option>
+                  <option value="PUSH (Cloud → Tally XML)">PUSH (Cloud → Tally XML)</option>
+                </select>
+              </label>
+            </div>
+            <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:0.6rem;">
+              <label style="font-size:0.82rem;font-weight:600;">
+                Party / Inter-Company Ledger
+                <input id="simParty" type="text" value="Larsen Industrial Supplies" style="width:100%;margin-top:0.25rem;" required>
+              </label>
+              <label style="font-size:0.82rem;font-weight:600;">
+                Amount (INR ₹)
+                <input id="simAmount" type="number" min="500" step="500" value="185000" style="width:100%;margin-top:0.25rem;" required>
+              </label>
+            </div>
+            <button class="primary" type="submit" style="margin-top:0.2rem;">🚀 Execute XML Envelope Sync</button>
+          </form>
+
+          <h3 style="margin:1rem 0 0.35rem;font-size:0.88rem;color:var(--muted);">Voucher Type Matrix Across 4 Companies</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Voucher Class</th>
+                <th class="num">Synced Count</th>
+                <th class="num">Volume (₹ Lakhs)</th>
+                <th>Idempotency Key</th>
+              </tr>
+            </thead>
+            <tbody id="typeSummaryBody"></tbody>
+          </table>
+        </section>
+      </div>
+    </div>
+
+    <!-- TAB 2: INTER-COMPANY RECONCILIATION -->
+    <div id="tab-recon" class="tab-pane">
+      <section class="panel" style="overflow-x:auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:0.8rem;flex-wrap:wrap;margin-bottom:0.8rem;">
+          <div>
+            <h2 style="margin:0;font-size:1.08rem;">⚖️ Automated Inter-Company Ledger &amp; Stock-in-Transit Reconciliation</h2>
+            <p style="margin:0.15rem 0 0;font-size:0.83rem;color:var(--muted);">
+              Cross-matches reciprocal Sundry Debtor / Creditor &amp; Branch/Division ledgers across TallyPrime and Legacy Tally.ERP 9 instances by GSTIN + Voucher Ref.
+            </p>
+          </div>
+          <button id="reconcileAllBtn" class="primary" type="button">✓ Auto-Reconcile All Open Variances (Post TDL Journals)</button>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Inter-Company Pair</th>
+              <th>Entity A Ledger (Dr)</th>
+              <th>Entity B Mirror Ledger (Cr)</th>
+              <th class="num">Variance (₹)</th>
+              <th>Detected Root Cause</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="reconBody"></tbody>
+        </table>
+      </section>
+    </div>
+
+    <!-- TAB 3: TDL + XML SNIPPET -->
+    <div id="tab-tdl" class="tab-pane">
+      <section class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.6rem;">
+          <div>
+            <h2 style="margin:0;font-size:1.06rem;">🧩 Backward-Compatible TDL &amp; XML Envelope (TallyPrime 4.x + Tally.ERP 9 Rel 6.x)</h2>
+            <p style="margin:0.15rem 0 0;font-size:0.83rem;color:var(--muted);">Uses <code>$AlterId</code> watermark filtering + <code>REMOTEID</code>/<code>GUID</code> deduplication so legacy Tally.ERP 9 never locks the UI thread.</p>
+          </div>
+          <div style="display:flex;gap:0.5rem;">
+            <button id="copyTdlBtn" type="button">📋 Copy XML/TDL</button>
+            <button id="downloadTdlBtn" class="primary" type="button">⬇ Download `tally_cloud_bridge.xml`</button>
+          </div>
+        </div>
+        <pre id="tdlCodeBlock">&lt;!-- 1. INCREMENTAL PULL REQUEST (Compatible with Tally.ERP 9 Rel 6.x &amp; TallyPrime 3.x/4.x) --&gt;
+&lt;ENVELOPE&gt;
+  &lt;HEADER&gt;
+    &lt;VERSION&gt;1&lt;/VERSION&gt;
+    &lt;TALLYREQUEST&gt;Export&lt;/TALLYREQUEST&gt;
+    &lt;TYPE&gt;Collection&lt;/TYPE&gt;
+    &lt;ID&gt;CloudDeltaVoucherCollection&lt;/ID&gt;
+  &lt;/HEADER&gt;
+  &lt;BODY&gt;
+    &lt;DESC&gt;
+      &lt;STATICVARIABLES&gt;
+        &lt;SVEXPORTFORMAT&gt;$$SysName:XML&lt;/SVEXPORTFORMAT&gt;
+        &lt;SVCURRENTCOMPANY&gt;Apex Manufacturing Pvt Ltd&lt;/SVCURRENTCOMPANY&gt;
+      &lt;/STATICVARIABLES&gt;
+      &lt;TDL&gt;
+        &lt;TDLMESSAGE&gt;
+          &lt;COLLECTION NAME="CloudDeltaVoucherCollection" ISINITIALIZE="Yes"&gt;
+            &lt;TYPE&gt;Voucher&lt;/TYPE&gt;
+            &lt;FETCH&gt;GUID, MasterId, AlterId, Date, VoucherTypeName, VoucherNumber, PartyLedgerName, Amount, Reference, AllLedgerEntries.*&lt;/FETCH&gt;
+            &lt;FILTER&gt;AlterIdWatermarkFilter&lt;/FILTER&gt;
+          &lt;/COLLECTION&gt;
+          &lt;SYSTEM TYPE="Formulae" NAME="AlterIdWatermarkFilter"&gt;$AlterId &amp;gt; 98410&lt;/SYSTEM&gt;
+        &lt;/TDLMESSAGE&gt;
+      &lt;/TDL&gt;
+    &lt;/DESC&gt;
+  &lt;/BODY&gt;
+&lt;/ENVELOPE&gt;
+
+&lt;!-- 2. BI-DIRECTIONAL PUSH ENVELOPE (Idempotent Voucher Upsert via ACTION="Alter" / REMOTEID) --&gt;
+&lt;ENVELOPE&gt;
+  &lt;HEADER&gt;
+    &lt;TALLYREQUEST&gt;Import Data&lt;/TALLYREQUEST&gt;
+  &lt;/HEADER&gt;
+  &lt;BODY&gt;
+    &lt;IMPORTDATA&gt;
+      &lt;REQUESTDESC&gt;
+        &lt;REPORTNAME&gt;Vouchers&lt;/REPORTNAME&gt;
+        &lt;STATICVARIABLES&gt;&lt;SVCURRENTCOMPANY&gt;Vanguard Retail Distributors&lt;/SVCURRENTCOMPANY&gt;&lt;/STATICVARIABLES&gt;
+      &lt;/REQUESTDESC&gt;
+      &lt;REQUESTDATA&gt;
+        &lt;TALLYMESSAGE xmlns:UDF="TallyUDF"&gt;
+          &lt;VOUCHER REMOTEID="ic-recon-jv-2026-0094" VCHTYPE="Journal" ACTION="Create"&gt;
+            &lt;DATE&gt;20261125&lt;/DATE&gt;
+            &lt;NARRATION&gt;Auto Inter-Company Reconciliation Adjustment via Cloud Sync Agent&lt;/NARRATION&gt;
+            &lt;VOUCHERTYPENAME&gt;Journal&lt;/VOUCHERTYPENAME&gt;
+            &lt;ALLLEDGERENTRIES.LIST&gt;
+              &lt;LEDGERNAME&gt;Apex Manufacturing Pvt Ltd (IC)&lt;/LEDGERNAME&gt;
+              &lt;ISDEEMEDPOSITIVE&gt;Yes&lt;/ISDEEMEDPOSITIVE&gt;
+              &lt;AMOUNT&gt;-142000.00&lt;/AMOUNT&gt;
+            &lt;/ALLLEDGERENTRIES.LIST&gt;
+            &lt;ALLLEDGERENTRIES.LIST&gt;
+              &lt;LEDGERNAME&gt;Goods-in-Transit Clearing A/c&lt;/LEDGERNAME&gt;
+              &lt;ISDEEMEDPOSITIVE&gt;No&lt;/ISDEEMEDPOSITIVE&gt;
+              &lt;AMOUNT&gt;142000.00&lt;/AMOUNT&gt;
+            &lt;/ALLLEDGERENTRIES.LIST&gt;
+          &lt;/VOUCHER&gt;
+        &lt;/TALLYMESSAGE&gt;
+      &lt;/REQUESTDATA&gt;
+    &lt;/IMPORTDATA&gt;
+  &lt;/BODY&gt;
+&lt;/ENVELOPE&gt;</pre>
+      </section>
+    </div>
+
+    <!-- TAB 4: POWER BI / EXCEL ODBC CONFIG -->
+    <div id="tab-bi" class="tab-pane">
+      <section class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.6rem;">
+          <div>
+            <h2 style="margin:0;font-size:1.06rem;">📊 Power BI / Excel Power Query (ODBC + Cloud PostgreSQL Read-Replica)</h2>
+            <p style="margin:0.15rem 0 0;font-size:0.83rem;color:var(--muted);">
+              Instead of querying fragile local Tally ODBC ports directly from Excel, all 4 companies sync every 60s into an indexed Cloud PostgreSQL Star Schema (`fact_vouchers`, `dim_company`, `vw_intercompany_recon`).
+            </p>
+          </div>
+          <button id="downloadPqBtn" class="primary" type="button">⬇ Download Power Query `.pq` Connector</button>
+        </div>
+        <pre id="pqCodeBlock">// Power BI &amp; Excel Power Query (M Language) — Live Multi-Company Tally Cloud Connector
+let
+    Source = Odbc.DataSource(
+        "Driver={PostgreSQL Unicode(x64)};Server=tally-warehouse.internal.cloud;Port=5432;Database=tally_group_mis;Sslmode=require;",
+        [HierarchicalNavigation = true]
+    ),
+    db = Source{[Name="tally_group_mis", Kind="Database"]}[Data],
+    public = db{[Name="public", Kind="Schema"]}[Data],
+    ConsolidatedMIS = public{[Name="vw_consolidated_group_vouchers", Kind="View"]}[Data],
+    FilteredFY = Table.SelectRows(ConsolidatedMIS, each [fiscal_year] = "FY2026-27" and [is_cancelled] = false)
+in
+    FilteredFY
+
+/* --- Local Windows Service Sync Agent Config (agent_config.toml) ---
+[cloud]
+endpoint = "https://mis-sync-api.yourcompany.com/v1/tally/ingest"
+tls_mtls_enabled = true
+batch_interval_seconds = 60
+
+[[instances]]
+company_code = "ENT-01"
+name = "Apex Manufacturing Pvt Ltd"
+engine = "TallyPrime_4.1"
+xml_url = "http://127.0.0.1:9000"
+odbc_dsn = "TallyODBC64_9000"
+
+[[instances]]
+company_code = "ENT-03"
+name = "Vanguard Retail Distributors"
+engine = "TallyERP9_6.6.3"
+xml_url = "http://127.0.0.1:9009"
+legacy_utf16_sanitize = true
+*/</pre>
+      </section>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const entities = [
+      { id: "ENT-01", name: "Apex Manufacturing Pvt Ltd", build: "TallyPrime 4.1", port: 9000, city: "Mumbai HQ", alterId: 98412, latencyMs: 38, status: "Synced (Live)", vchCount: 4620 },
+      { id: "ENT-02", name: "Apex Logistics & Warehousing LLP", build: "TallyPrime 3.0.1", port: 9002, city: "Pune Hub", alterId: 54109, latencyMs: 44, status: "Synced (Live)", vchCount: 3180 },
+      { id: "ENT-03", name: "Vanguard Retail Distributors", build: "Legacy Tally.ERP 9 (Rel 6.6.3)", port: 9009, city: "Delhi NCR", alterId: 71904, latencyMs: 79, status: "TDL UTF-8 Bridge", vchCount: 2890 },
+      { id: "ENT-04", name: "Apex SEZ Exports Unit", build: "Legacy Tally.ERP 9 (Rel 6.5)", port: 9012, city: "Chennai SEZ", alterId: 39228, latencyMs: 92, status: "TDL UTF-8 Bridge", vchCount: 1798 }
+    ];
+
+    let vouchers = [
+      { guid: "8f4a1c-SL-9921", entity: "ENT-01", type: "Sales", party: "Vanguard Retail Distributors (IC)", amount: 645000, alterId: 98412, dir: "PULL (Tally → Cloud)" },
+      { guid: "3b9e2d-ST-4092", entity: "ENT-01", type: "Stock Transfer", party: "Delhi NCR Godown (In-Transit)", amount: 142000, alterId: 98411, dir: "PULL (Tally → Cloud)" },
+      { guid: "7c1d0a-PU-7740", entity: "ENT-03", type: "Purchase", party: "Apex Manufacturing Pvt Ltd (IC)", amount: 645000, alterId: 71904, dir: "PULL (Tally → Cloud)" },
+      { guid: "5a8f11-RC-3318", entity: "ENT-02", type: "Receipt", party: "Reliance Supply Chain Solutions", amount: 390000, alterId: 54109, dir: "PUSH (Cloud → Tally XML)" },
+      { guid: "2e6b99-PY-2190", entity: "ENT-04", type: "Payment", party: "Maersk Container Line India", amount: 275000, alterId: 39228, dir: "PULL (Tally → Cloud)" },
+      { guid: "9d0c44-JV-1105", entity: "ENT-02", type: "Journal", party: "GST Input Credit Provision A/c", amount: 88500, alterId: 54108, dir: "PUSH (Cloud → Tally XML)" },
+      { guid: "1f7a33-SL-8830", entity: "ENT-04", type: "Sales", party: "EuroTech GmbH Export Receivable", amount: 1240000, alterId: 39227, dir: "PULL (Tally → Cloud)" },
+      { guid: "6b3e81-PU-5512", entity: "ENT-01", type: "Purchase", party: "JSW Cold Rolled Steel Coils", amount: 910000, alterId: 98410, dir: "PULL (Tally → Cloud)" }
+    ];
+
+    let reconPairs = [
+      {
+        id: "IC-01",
+        pair: "Apex Mfg (Prime 4.1) ↔ Vanguard Retail (ERP 9)",
+        drText: "₹28,42,000 Dr",
+        crText: "₹27,00,000 Cr",
+        variance: 142000,
+        cause: "Stock Transfer #ST-4092 dispatched from Mumbai HQ, pending GRN entry in Delhi Tally.ERP 9",
+        reconciled: false
+      },
+      {
+        id: "IC-02",
+        pair: "Apex Mfg (Prime 4.1) ↔ Apex Logistics LLP (Prime 3.0)",
+        drText: "₹11,65,000 Dr",
+        crText: "₹11,12,500 Cr",
+        variance: 52500,
+        cause: "Section 194C Freight TDS Deduction (₹52,500) unbooked in Logistics mirror ledger",
+        reconciled: false
+      },
+      {
+        id: "IC-03",
+        pair: "Vanguard Retail (ERP 9) ↔ Apex SEZ Exports (ERP 9)",
+        drText: "₹6,80,000 Dr",
+        crText: "₹6,55,000 Cr",
+        variance: 25000,
+        cause: "Debit Note #DN-109 Packaging Return awaiting approval on Port 9012",
+        reconciled: false
+      },
+      {
+        id: "IC-04",
+        pair: "Apex Logistics LLP (Prime 3.0) ↔ Apex SEZ Exports (ERP 9)",
+        drText: "₹9,40,000 Dr",
+        crText: "₹9,40,000 Cr",
+        variance: 0,
+        cause: "Exact GSTIN + Voucher Reference Match (Auto-Cleared)",
+        reconciled: true
+      }
+    ];
+
+    let salesTotal = 148240000;
+    let purchTotal = 89415000;
+    let cashTotal = 31865000;
+
+    const fmtINR = n => "₹" + Math.round(n).toLocaleString("en-IN");
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 2600);
+    }
+
+    function renderEntities() {
+      document.getElementById("entityGrid").innerHTML = entities.map(e => {
+        const isLegacy = e.build.includes("ERP 9");
+        return `<article class="entity-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="badge ${isLegacy ? "warn" : "ok"}">${e.build}</span>
+            <span style="font-size:0.78rem;color:var(--muted);">Port ${e.port} · ${e.latencyMs}ms</span>
+          </div>
+          <h3>${e.name}</h3>
+          <p style="margin:0;font-size:0.8rem;color:var(--muted);">${e.city} · Status: <strong>${e.status}</strong></p>
+          <div style="display:flex;justify-content:space-between;margin-top:0.65rem;padding-top:0.55rem;border-top:1px solid var(--border);font-size:0.8rem;">
+            <span>Watermark <code>ALTERID</code>: <strong>${e.alterId}</strong></span>
+            <span><strong>${e.vchCount.toLocaleString()}</strong> vchs</span>
+          </div>
+        </article>`;
+      }).join("");
+    }
+
+    function renderVouchers() {
+      const fEnt = document.getElementById("filterEntity").value;
+      const fType = document.getElementById("filterType").value;
+      const entMap = Object.fromEntries(entities.map(e => [e.id, e]));
+
+      const rows = vouchers.filter(v =>
+        (fEnt === "ALL" || v.entity === fEnt) &&
+        (fType === "ALL" || v.type === fType)
+      );
+
+      document.getElementById("voucherBody").innerHTML = rows.slice(0, 12).map(v => {
+        const ent = entMap[v.entity];
+        const isPush = v.dir.startsWith("PUSH");
+        return `<tr>
+          <td><code>${v.guid}</code></td>
+          <td><strong>${ent.name.split(" ").slice(0, 2).join(" ")}</strong><br><small style="color:var(--muted);">${ent.build}</small></td>
+          <td><span class="badge info">${v.type}</span></td>
+          <td>${v.party}</td>
+          <td class="num"><strong>${fmtINR(v.amount)}</strong></td>
+          <td class="num"><code>${v.alterId}</code></td>
+          <td><span class="badge ${isPush ? "warn" : "ok"}">${isPush ? "PUSH → Tally" : "PULL → Cloud"}</span></td>
+        </tr>`;
+      }).join("");
+
+      // Type summary
+      const classes = ["Sales", "Purchase", "Receipt", "Payment", "Journal", "Stock Transfer"];
+      const baseCounts = { "Sales": 3840, "Purchase": 2910, "Receipt": 2415, "Payment": 1980, "Journal": 895, "Stock Transfer": 448 };
+      const baseLakhs = { "Sales": 1482.4, "Purchase": 894.1, "Receipt": 1120.5, "Payment": 845.0, "Journal": 196.8, "Stock Transfer": 312.4 };
+
+      document.getElementById("typeSummaryBody").innerHTML = classes.map(c => {
+        const extra = vouchers.slice(8).filter(v => v.type === c);
+        const cnt = baseCounts[c] + extra.length;
+        const vol = baseLakhs[c] + extra.reduce((s, x) => s + x.amount / 100000, 0);
+        return `<tr>
+          <td><strong>${c}</strong></td>
+          <td class="num">${cnt.toLocaleString()}</td>
+          <td class="num">₹${vol.toFixed(1)} L</td>
+          <td><code>GUID + CompanyCode</code></td>
+        </tr>`;
+      }).join("");
+    }
+
+    function renderReconciliation() {
+      const openVars = reconPairs.filter(r => !r.reconciled);
+      const totalVar = openVars.reduce((s, r) => s + r.variance, 0);
+
+      document.getElementById("openVarCount").textContent = openVars.length;
+      document.getElementById("kpiVariance").textContent = fmtINR(totalVar);
+      document.getElementById("kpiVariance").style.color = totalVar === 0 ? "var(--ok-fg)" : "var(--warn-fg)";
+
+      document.getElementById("reconBody").innerHTML = reconPairs.map(r => `<tr>
+        <td><strong>${r.pair}</strong></td>
+        <td>${r.drText}</td>
+        <td>${r.reconciled ? r.drText.replace("Dr", "Cr") : r.crText}</td>
+        <td class="num" style="font-weight:700;color:${r.reconciled ? "var(--ok-fg)" : "var(--err-fg)"};">
+          ${r.reconciled ? "₹0 (Matched)" : fmtINR(r.variance)}
+        </td>
+        <td style="max-width:300px;font-size:0.82rem;color:var(--muted);">${r.cause}</td>
+        <td><span class="badge ${r.reconciled ? "ok" : "warn"}">${r.reconciled ? "Reconciled ✓" : "Variance Detected"}</span></td>
+        <td>
+          ${r.reconciled
+            ? `<span style="font-size:0.8rem;color:var(--muted);">Cleared</span>`
+            : `<button type="button" data-recon="${r.id}" style="padding:0.32rem 0.65rem;font-size:0.8rem;">Post TDL Journal</button>`}
+        </td>
+      </tr>`).join("");
+
+      document.querySelectorAll("[data-recon]").forEach(btn => {
+        btn.addEventListener("click", () => reconcileSingle(btn.dataset.recon));
+      });
+    }
+
+    function updateKpis() {
+      const totalVchs = entities.reduce((s, e) => s + e.vchCount, 0);
+      document.getElementById("kpiRevenue").textContent = fmtINR(salesTotal);
+      document.getElementById("kpiPayables").textContent = fmtINR(purchTotal);
+      document.getElementById("kpiNetCash").textContent = fmtINR(cashTotal);
+      document.getElementById("kpiVouchers").textContent = totalVchs.toLocaleString();
+    }
+
+    function reconcileSingle(id) {
+      const item = reconPairs.find(r => r.id === id);
+      if (!item || item.reconciled) return;
+      item.reconciled = true;
+      const ent = entities[2]; // Post adjustment to mirror entity
+      ent.alterId += 1;
+      ent.vchCount += 1;
+      vouchers.unshift({
+        guid: `ic-jv-${Math.floor(1000 + Math.random() * 9000)}`,
+        entity: ent.id,
+        type: "Journal",
+        party: `Auto IC Recon (${item.pair.split("↔")[0].trim()})`,
+        amount: item.variance,
+        alterId: ent.alterId,
+        dir: "PUSH (Cloud → Tally XML)"
+      });
+      renderEntities();
+      renderVouchers();
+      renderReconciliation();
+      updateKpis();
+      showToast(`Posted bi-directional TDL Journal (${fmtINR(item.variance)}) & reconciled ${item.id}!`);
+    }
+
+    document.getElementById("reconcileAllBtn").addEventListener("click", () => {
+      const pending = reconPairs.filter(r => !r.reconciled);
+      if (!pending.length) { showToast("All 4 inter-company ledger pairs are already 100% reconciled!"); return; }
+      pending.forEach(p => reconcileSingle(p.id));
+      showToast(`Reconciled all ${pending.length} inter-company variances via TDL XML Import!`);
+    });
+
+    document.getElementById("simVoucherForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const entId = document.getElementById("simEntity").value;
+      const vType = document.getElementById("simVchType").value;
+      const dir = document.getElementById("simDir").value;
+      const party = document.getElementById("simParty").value.trim() || "Sundry Counterparty";
+      const amount = Math.max(100, Number(document.getElementById("simAmount").value) || 50000);
+
+      const ent = entities.find(x => x.id === entId);
+      ent.alterId += 1;
+      ent.vchCount += 1;
+      ent.latencyMs = Math.floor(32 + Math.random() * 48);
+
+      if (vType === "Sales") salesTotal += amount;
+      if (vType === "Purchase") purchTotal += amount;
+      if (vType === "Receipt") cashTotal += amount;
+      if (vType === "Payment") cashTotal -= amount;
+
+      const prefix = vType.slice(0, 2).toUpperCase();
+      vouchers.unshift({
+        guid: `${Math.random().toString(16).slice(2, 8)}-${prefix}-${Math.floor(1000 + Math.random() * 8999)}`,
+        entity: entId,
+        type: vType,
+        party,
+        amount,
+        alterId: ent.alterId,
+        dir
+      });
+
+      renderEntities();
+      renderVouchers();
+      updateKpis();
+      showToast(`Synced ${vType} (${fmtINR(amount)}) on ${ent.name} [ALTERID=${ent.alterId}]`);
+    });
+
+    document.getElementById("syncCycleBtn").addEventListener("click", () => {
+      const sampleParties = ["Tata Industrial Components", "Bajaj Electricals Wholesale", "BlueDart Surface Cargo", " Jindal Poly Films"];
+      const sampleTypes = ["Sales", "Receipt", "Purchase", "Stock Transfer"];
+      entities.forEach((ent, idx) => {
+        ent.alterId += 2;
+        ent.vchCount += 2;
+        ent.latencyMs = Math.floor(29 + Math.random() * 52);
+        const amt = (idx + 1) * 42500;
+        salesTotal += amt;
+        vouchers.unshift({
+          guid: `delta-${ent.id.toLowerCase()}-${ent.alterId}`,
+          entity: ent.id,
+          type: sampleTypes[idx],
+          party: sampleParties[idx],
+          amount: amt,
+          alterId: ent.alterId,
+          dir: "PULL (Tally → Cloud)"
+        });
+      });
+      renderEntities();
+      renderVouchers();
+      updateKpis();
+      showToast("Delta Sync Complete: Pulled 8 new vouchers across all 4 TallyPrime & ERP 9 instances!");
+    });
+
+    ["filterEntity", "filterType"].forEach(id => {
+      document.getElementById(id).addEventListener("change", renderVouchers);
+    });
+
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
+      });
+    });
+
+    document.getElementById("themeBtn").addEventListener("click", () => {
+      const meta = document.querySelector('meta[name="color-scheme"]');
+      const next = meta.content === "dark" ? "light" : "dark";
+      meta.content = next;
+      document.documentElement.style.colorScheme = next;
+      try { localStorage.setItem("color-scheme", next); } catch {}
+    });
+
+    document.getElementById("copyTdlBtn").addEventListener("click", () => {
+      navigator.clipboard.writeText(document.getElementById("tdlCodeBlock").innerText);
+      showToast("Copied Tally XML / TDL Push-Pull Envelope!");
+    });
+
+    document.getElementById("downloadTdlBtn").addEventListener("click", () => {
+      const blob = new Blob([document.getElementById("tdlCodeBlock").innerText], { type: "application/xml;charset=utf-8;" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "tally_cloud_bridge.xml";
+      a.click();
+      showToast("Downloaded tally_cloud_bridge.xml");
+    });
+
+    document.getElementById("downloadPqBtn").addEventListener("click", () => {
+      const blob = new Blob([document.getElementById("pqCodeBlock").innerText], { type: "text/plain;charset=utf-8;" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "TallyGroupMIS_PowerBI_Connector.pq";
+      a.click();
+      showToast("Downloaded Power BI / Excel Power Query Connector (.pq)");
+    });
+
+    document.getElementById("exportCsvBtn").addEventListener("click", () => {
+      const entMap = Object.fromEntries(entities.map(e => [e.id, e.name]));
+      const header = "guid,company_code,company_name,voucher_type,party_ledger,amount_inr,alter_id,sync_direction\n";
+      const rows = vouchers.map(v =>
+        `"${v.guid}","${v.entity}","${entMap[v.entity]}","${v.type}","${v.party}",${v.amount},${v.alterId},"${v.dir}"`
+      ).join("\n");
+      const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8;" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "Tally_Consolidated_Group_MIS_Vouchers.csv";
+      a.click();
+      showToast("Exported Consolidated Group MIS Vouchers CSV!");
+    });
+
+    renderEntities();
+    renderVouchers();
+    renderReconciliation();
+    updateKpis();
+  </script>
+</body>
+</html>

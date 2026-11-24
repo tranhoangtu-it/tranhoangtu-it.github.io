@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    try {
+      const saved = localStorage.getItem("color-scheme");
+      if (saved) document.querySelector('meta[name="color-scheme"]').content = saved;
+    } catch {}
+  </script>
+  <title>ASTRA AI Crypto Trading Agent — Binance USDⓈ-M Adapter &amp; Replit Audit Workbench</title>
+  <meta name="description" content="Modular ASTRA Binance USDⓈ-M Futures Demo-to-Live Trading Architecture, Risk Gate & Precision Normalizer, and Interactive Replit Python Codebase Audit Workbench.">
+  <style>
+    :root {
+      --bg: light-dark(#f8fafc, #090d16);
+      --surface: light-dark(#ffffff, #111827);
+      --surface-alt: light-dark(#f1f5f9, #1e293b);
+      --text: light-dark(#0f172a, #f8fafc);
+      --muted: light-dark(#475569, #94a3b8);
+      --border: light-dark(#cbd5e1, #334155);
+      --accent: light-dark(#0284c7, #38bdf8);
+      --accent-soft: light-dark(#e0f2fe, #0c4a6e);
+      --ok-bg: light-dark(#dcfce7, #064e3b);
+      --ok-fg: light-dark(#166534, #6ee7b7);
+      --warn-bg: light-dark(#fef3c7, #78350f);
+      --warn-fg: light-dark(#92400e, #fcd34d);
+      --err-bg: light-dark(#fee2e2, #7f1d1d);
+      --err-fg: light-dark(#991b1b, #fca5a5);
+      color-scheme: light dark;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.5;
+    }
+    .wrap { max-inline-size: 1240px; margin-inline: auto; padding: 1.35rem 1.25rem 3rem; }
+    .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    a:hover { text-decoration: underline; }
+    .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    button, select, input {
+      font: inherit; border-radius: 0.55rem; border: 1px solid var(--border);
+      padding: 0.48rem 0.8rem; background: var(--surface-alt); color: var(--text);
+    }
+    button { cursor: pointer; font-weight: 600; }
+    button.primary { background: var(--accent); color: #fff; border-color: transparent; }
+    button.danger { background: var(--err-bg); color: var(--err-fg); border-color: var(--err-fg); }
+    .env-banner {
+      display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;
+      padding: 0.9rem 1.15rem; border-radius: 0.85rem; margin-bottom: 1rem; border: 2px solid var(--ok-fg);
+      background: var(--surface);
+    }
+    .env-banner.live { border-color: var(--warn-fg); }
+    .switch-pill {
+      display: inline-flex; background: var(--surface-alt); border: 1px solid var(--border);
+      border-radius: 999px; padding: 0.22rem; gap: 0.25rem;
+    }
+    .switch-pill button {
+      border: none; border-radius: 999px; padding: 0.4rem 0.9rem; font-size: 0.82rem; background: transparent; color: var(--muted);
+    }
+    .switch-pill button.active-demo { background: var(--ok-bg); color: var(--ok-fg); }
+    .switch-pill button.active-live { background: var(--warn-bg); color: var(--warn-fg); }
+    .tabs { display: flex; gap: 0.45rem; flex-wrap: wrap; border-bottom: 1px solid var(--border); padding-bottom: 0.65rem; margin-bottom: 1rem; }
+    .tab-btn { background: transparent; border: 1px solid transparent; color: var(--muted); padding: 0.46rem 0.88rem; }
+    .tab-btn.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 0.9rem; padding: 1.15rem; margin-bottom: 1rem; }
+    .split { display: grid; grid-template-columns: 1.05fr 1.15fr; gap: 1rem; }
+    @media (max-width: 900px) { .split { grid-template-columns: 1fr; } }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+    .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 0.8rem; padding: 0.85rem 1rem; }
+    .kpi strong { display: block; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+    .kpi span { font-size: 0.78rem; color: var(--muted); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; }
+    .form-grid label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.81rem; font-weight: 600; color: var(--muted); }
+    .form-grid input, .form-grid select { color: var(--text); font-weight: 500; width: 100%; }
+    .badge { display: inline-block; padding: 0.18rem 0.55rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+    .badge.ok { background: var(--ok-bg); color: var(--ok-fg); }
+    .badge.warn { background: var(--warn-bg); color: var(--warn-fg); }
+    .badge.err { background: var(--err-bg); color: var(--err-fg); }
+    .log-box {
+      background: var(--surface-alt); border: 1px solid var(--border); border-radius: 0.7rem;
+      padding: 0.85rem; height: 290px; overflow-y: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.79rem; line-height: 1.55;
+    }
+    .log-line { border-bottom: 1px dashed var(--border); padding: 0.32rem 0; }
+    .audit-item {
+      display: flex; align-items: flex-start; gap: 0.8rem; padding: 0.85rem;
+      border: 1px solid var(--border); border-radius: 0.75rem; margin-bottom: 0.65rem; background: var(--surface-alt);
+    }
+    .audit-item input[type="checkbox"] { width: 1.15rem; height: 1.15rem; margin-top: 0.2rem; accent-color: var(--accent); cursor: pointer; }
+    pre {
+      background: var(--surface-alt); border: 1px solid var(--border); border-radius: 0.7rem;
+      padding: 0.95rem; overflow-x: auto; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.81rem; line-height: 1.48; margin: 0.5rem 0 0;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th, td { text-align: left; padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--border); }
+    th { font-size: 0.75rem; text-transform: uppercase; color: var(--muted); }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .toast {
+      position: fixed; bottom: 1.2rem; right: 1.2rem; background: var(--text); color: var(--bg);
+      padding: 0.65rem 1rem; border-radius: 0.6rem; font-size: 0.85rem; font-weight: 600;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s ease; z-index: 50;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar">
+      <div>
+        <a href="/demos/">← All Interactive Demos</a>
+        <h1 style="margin:0.25rem 0 0;font-size:1.46rem;">🤖 ASTRA Crypto Trading Agent — Demo ↔ Live Adapter &amp; Replit Audit Workbench</h1>
+        <p style="margin:0.2rem 0 0;color:var(--muted);font-size:0.9rem;">
+          Zero-Rebuild Binance USDⓈ-M Futures Adapter Pattern · Exact <code>LOT_SIZE</code>/<code>PRICE_FILTER</code> Normalizer · Pre-Trade Risk Gate · Replit Codebase Audit.
+        </p>
+      </div>
+      <div class="actions">
+        <button id="themeBtn" type="button">🌓 Theme</button>
+        <button id="killSwitchBtn" class="danger" type="button">🛑 Arm Kill-Switch</button>
+        <button id="exportAuditBtn" class="primary" type="button">📄 Export Audit &amp; Architecture (.md)</button>
+      </div>
+    </header>
+
+    <!-- 1-CLICK ZERO-REBUILD ADAPTER BANNER -->
+    <section id="envBanner" class="env-banner" aria-label="Adapter Environment Switch">
+      <div>
+        <div style="display:flex;align-items:center;gap:0.55rem;flex-wrap:wrap;">
+          <span id="envBadge" class="badge ok">BINANCE_DEMO_TESTNET</span>
+          <strong id="envRestUrl" style="font-family:ui-monospace,monospace;font-size:0.88rem;">https://testnet.binancefuture.com</strong>
+          <span style="color:var(--muted);font-size:0.82rem;">| WS: <code id="envWsUrl">wss://stream.binancefuture.com/ws</code></span>
+        </div>
+        <p id="envSubtext" style="margin:0.25rem 0 0;font-size:0.81rem;color:var(--muted);">
+          Adapter Pattern Active: Strategy, Feature Engine &amp; Risk Gate remain 100% untouched when toggling Demo ↔ Live credentials.
+        </p>
+      </div>
+      <div class="switch-pill" role="group" aria-label="Select Execution Adapter">
+        <button id="btnDemoEnv" class="active-demo" type="button">🧪 DEMO TESTNET</button>
+        <button id="btnLiveEnv" type="button">⚡ LIVE MAINNET</button>
+      </div>
+    </section>
+
+    <nav class="tabs" aria-label="ASTRA Workbench Tabs">
+      <button class="tab-btn active" data-tab="execution" type="button">🛡️ Risk Gate, Precision Sizer &amp; Order Stream</button>
+      <button class="tab-btn" data-tab="audit" type="button">✅ Replit Python Codebase Audit (<span id="auditScoreInline">100%</span>)</button>
+      <button class="tab-btn" data-tab="python" type="button">🐍 Modular Python Adapter Reference (`astra/exchange.py`)</button>
+    </nav>
+
+    <!-- TAB 1: RISK GATE + ORDER BOOK EXECUTION -->
+    <div id="tab-execution" class="tab-pane active">
+      <div class="kpi-grid">
+        <div class="kpi"><strong id="kpiVerdict" style="color:var(--ok-fg);">PASS ✅</strong><span>Pre-Trade Risk Gate Verdict</span></div>
+        <div class="kpi"><strong id="kpiNormQty">0.037 BTC</strong><span>Normalized <code>LOT_SIZE</code> Qty</span></div>
+        <div class="kpi"><strong id="kpiNotional">$3,496.50</strong><span>Position Notional &amp; Eff. Lev</span></div>
+        <div class="kpi"><strong id="kpiMargin">$349.65</strong><span>Initial Margin (ISOLATED)</span></div>
+        <div class="kpi"><strong id="kpiClientOid" style="font-size:0.92rem;font-family:ui-monospace,monospace;">astra-demo-btc-...</strong><span>Idempotent <code>newClientOrderId</code></span></div>
+      </div>
+
+      <div class="split">
+        <section class="panel">
+          <h2 style="margin:0 0 0.7rem;font-size:1.04rem;">📐 Position-Sizing, Leverage &amp; Exchange Filter Normalizer</h2>
+          <div class="form-grid">
+            <label>
+              USDⓈ-M Perpetual Symbol
+              <select id="symSelect">
+                <option value="BTCUSDT">BTCUSDT (stepSize 0.001 · tickSize 0.10)</option>
+                <option value="ETHUSDT">ETHUSDT (stepSize 0.001 · tickSize 0.01)</option>
+                <option value="SOLUSDT">SOLUSDT (stepSize 0.1 · tickSize 0.01)</option>
+                <option value="BNBUSDT">BNBUSDT (stepSize 0.01 · tickSize 0.01)</option>
+              </select>
+            </label>
+            <label>
+              Signal Side
+              <select id="sideSelect">
+                <option value="BUY">LONG (BUY)</option>
+                <option value="SELL">SHORT (SELL)</option>
+              </select>
+            </label>
+            <label>
+              Account Equity (USDT)
+              <input id="eqInput" type="number" min="100" step="100" value="5000">
+            </label>
+            <label>
+              Risk Per Trade (% of Equity)
+              <input id="riskPctInput" type="number" min="0.1" max="10" step="0.25" value="1.0">
+            </label>
+            <label>
+              Entry Limit Price (USDT)
+              <input id="entryInput" type="number" step="0.001" value="94500.27">
+            </label>
+            <label>
+              Hard Stop-Loss Price (USDT)
+              <input id="slInput" type="number" step="0.001" value="93150.84">
+            </label>
+            <label>
+              Max Leverage Cap (x)
+              <input id="maxLevInput" type="number" min="1" max="50" step="1" value="10">
+            </label>
+            <label>
+              Current Daily Drawdown (%) / Max 4.0%
+              <input id="ddInput" type="number" min="0" max="15" step="0.5" value="1.2">
+            </label>
+          </div>
+
+          <div style="margin-top:0.85rem;padding:0.75rem;border-radius:0.65rem;background:var(--surface-alt);font-size:0.82rem;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem;">
+              <span>Raw Unrounded Qty: <code id="rawQtySpan">—</code></span>
+              <span>Normalized Entry/SL: <code id="normPriceSpan">—</code></span>
+            </div>
+            <div id="gateReasonText" style="font-weight:600;color:var(--ok-fg);">All 5 Pre-Trade Risk &amp; Exchange Filter Gates Passed.</div>
+          </div>
+
+          <div style="display:flex;gap:0.55rem;flex-wrap:wrap;margin-top:0.85rem;">
+            <button id="fireSignalBtn" class="primary" type="button">⚡ Dispatch Signal Through Adapter</button>
+            <button id="simTickBtn" type="button">📡 Simulate L2 Order-Book Impulse</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.55rem;">
+            <h2 style="margin:0;font-size:1.04rem;">📜 Live ASTRA Signal → Risk Gate → Binance Execution Log</h2>
+            <button id="clearLogBtn" type="button" style="padding:0.28rem 0.6rem;font-size:0.78rem;">Clear Log</button>
+          </div>
+          <div id="execLog" class="log-box" aria-live="polite"></div>
+
+          <h3 style="margin:0.85rem 0 0.4rem;font-size:0.84rem;color:var(--muted);">Simulated L2 Order-Book Top-of-Book Snapshot</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th class="num">Best Bid</th>
+                <th class="num">Best Ask</th>
+                <th class="num">OBI Imbalance</th>
+                <th>Regime Signal</th>
+              </tr>
+            </thead>
+            <tbody id="obSnapshotBody"></tbody>
+          </table>
+        </section>
+      </div>
+    </div>
+
+    <!-- TAB 2: REPLIT CODEBASE AUDIT CHECKLIST -->
+    <div id="tab-audit" class="tab-pane">
+      <section class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.8rem;margin-bottom:0.9rem;">
+          <div>
+            <h2 style="margin:0;font-size:1.08rem;">🔍 Initial-Stage Replit Python Codebase Audit &amp; Hardening Checklist</h2>
+            <p style="margin:0.15rem 0 0;font-size:0.83rem;color:var(--muted);">
+              Toggle items below to inspect critical failure modes commonly found in early Replit crypto bots and our exact Python fixes.
+            </p>
+          </div>
+          <span id="auditScoreBadge" class="badge ok" style="font-size:0.9rem;padding:0.35rem 0.85rem;">Readiness Score: 6 / 6 (100%)</span>
+        </div>
+        <div id="auditList"></div>
+      </section>
+    </div>
+
+    <!-- TAB 3: PYTHON ADAPTER CODE -->
+    <div id="tab-python" class="tab-pane">
+      <section class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.6rem;">
+          <div>
+            <h2 style="margin:0;font-size:1.06rem;">🐍 Clean Python 3.11 Exchange Adapter + Decimal Filter Normalizer</h2>
+            <p style="margin:0.15rem 0 0;font-size:0.83rem;color:var(--muted);">
+              Drop-in modular architecture for your Replit workspace: switch `ASTRA_ENV=testnet` ↔ `ASTRA_ENV=live` via Replit Secrets with zero strategy edits.
+            </p>
+          </div>
+          <button id="copyPyBtn" class="primary" type="button">📋 Copy Python Module</button>
+        </div>
+        <pre id="pyCodeBlock">from dataclasses import dataclass
+from decimal import Decimal, ROUND_DOWN
+import hashlib, hmac, os, time
+from typing import Literal
+
+EnvMode = Literal["testnet", "live"]
+
+@dataclass(frozen=True)
+class BinanceFuturesConfig:
+    mode: EnvMode
+    rest_base: str
+    ws_base: str
+    api_key: str
+    api_secret: str
+
+    @classmethod
+    def from_replit_secrets(cls) -&gt; "BinanceFuturesConfig":
+        mode: EnvMode = "live" if os.getenv("ASTRA_ENV", "testnet").lower() == "live" else "testnet"
+        if mode == "live":
+            if os.getenv("ASTRA_LIVE_ARMED") != "true":
+                raise RuntimeError("Refusing LIVE mainnet boot: set ASTRA_LIVE_ARMED=true explicitly.")
+            return cls(
+                mode="live",
+                rest_base="https://fapi.binance.com",
+                ws_base="wss://fstream.binance.com/ws",
+                api_key=os.environ["BINANCE_LIVE_API_KEY"].strip(),
+                api_secret=os.environ["BINANCE_LIVE_API_SECRET"].strip(),
+            )
+        return cls(
+            mode="testnet",
+            rest_base="https://testnet.binancefuture.com",
+            ws_base="wss://stream.binancefuture.com/ws",
+            api_key=os.environ["BINANCE_TESTNET_API_KEY"].strip(),
+            api_secret=os.environ["BINANCE_TESTNET_API_SECRET"].strip(),
+        )
+
+def normalize_step(value: Decimal, step: Decimal) -&gt; Decimal:
+    """Prevents Binance -1111 Precision &amp; Filter failure: LOT_SIZE / PRICE_FILTER."""
+    return (value // step) * step.quantize(step, rounding=ROUND_DOWN)
+
+def deterministic_client_order_id(mode: str, symbol: str, side: str, signal_ts_bucket: int) -&gt; str:
+    digest = hashlib.sha256(f"{mode}:{symbol}:{side}:{signal_ts_bucket}".encode()).hexdigest()[:10]
+    return f"astra-{mode[:4]}-{symbol.lower()}-{digest}"</pre>
+      </section>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const SYMBOLS = {
+      BTCUSDT: { stepSize: 0.001, tickSize: 0.10, minNotional: 100, defaultEntry: 94500.27, defaultSl: 93150.84, bid: 94500.10, ask: 94500.20, obi: "+0.38" },
+      ETHUSDT: { stepSize: 0.001, tickSize: 0.01, minNotional: 20, defaultEntry: 3120.456, defaultSl: 3065.129, bid: 3120.44, ask: 3120.46, obi: "+0.24" },
+      SOLUSDT: { stepSize: 0.1, tickSize: 0.01, minNotional: 5, defaultEntry: 192.484, defaultSl: 187.902, bid: 192.47, ask: 192.49, obi: "-0.19" },
+      BNBUSDT: { stepSize: 0.01, tickSize: 0.01, minNotional: 5, defaultEntry: 642.338, defaultSl: 631.104, bid: 642.32, ask: 642.35, obi: "+0.11" }
+    };
+
+    const AUDIT_ITEMS = [
+      {
+        id: "sec-isolation",
+        title: "1. Replit Secrets Isolation & Dual-Namespace Credential Guard (`TESTNET` vs `LIVE`)",
+        detail: "Eliminates hardcoded keys and `.env` git leaks; separates `BINANCE_TESTNET_API_KEY` from `BINANCE_LIVE_API_KEY` with `.strip()` newline sanitization and `ASTRA_LIVE_ARMED=true` boot interlock.",
+        checked: true
+      },
+      {
+        id: "ws-reconnect",
+        title: "2. Async WebSocket Exponential Backoff + 30-Min `listenKey` User-Data Keepalive",
+        detail: "Handles Replit container network resets cleanly via `asyncio` reconnect jitter, sequence gap detection (`U`/`u` order-book snapshot resync), and scheduled `PUT /fapi/v1/listenKey` heartbeat.",
+        checked: true
+      },
+      {
+        id: "idempotent-oid",
+        title: "3. Deterministic Idempotent `newClientOrderId` on Every Order Placement",
+        detail: "Generates `astra-{env}-{symbol}-{hash10}` per signal candle so HTTP 502/timeout retries query `GET /fapi/v1/order` first and never double-open a leveraged position.",
+        checked: true
+      },
+      {
+        id: "lot-filter",
+        title: "4. Exact `Decimal` `LOT_SIZE`, `PRICE_FILTER` & `MIN_NOTIONAL` Pre-Normalization",
+        detail: "Replaces IEEE-754 float math with `decimal.Decimal` quantized against `/fapi/v1/exchangeInfo` `stepSize` and `tickSize`, preventing `-1111` & `-1013` order rejections in live trading.",
+        checked: true
+      },
+      {
+        id: "risk-circuit",
+        title: "5. Independent Pre-Trade `RiskGate` & Max Daily Drawdown Kill-Switch",
+        detail: "Enforces per-trade % equity risk, max symbol leverage cap, `ISOLATED` margin verification, and automatic `DELETE /fapi/v1/allOpenOrders` when daily drawdown exceeds threshold.",
+        checked: true
+      },
+      {
+        id: "adapter-pattern",
+        title: "6. Clean Hexagonal `ExchangeAdapter` Separation (Signal Engine ≠ Broker I/O)",
+        detail: "Decouples ASTRA's alpha/AI signal generator from Binance REST/WS transport so backtesting, Demo Testnet, and Live Mainnet run identical strategy code.",
+        checked: true
+      }
+    ];
+
+    let envMode = "DEMO"; // DEMO | LIVE
+    let killSwitchArmed = false;
+    let logs = [];
+
+    function floorToStep(val, step) {
+      const inv = Math.round(1 / step);
+      return Math.floor((val + 1e-12) * inv) / inv;
+    }
+
+    function decimalsOf(step) {
+      const s = step.toString();
+      return s.includes(".") ? s.split(".")[1].length : 0;
+    }
+
+    function hashShort(str) {
+      let h = 2166136261;
+      for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      return (h >>> 0).toString(16).padStart(8, "0");
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      setTimeout(() => el.classList.remove("show"), 2600);
+    }
+
+    function appendLog(level, msg) {
+      const ts = new Date().toISOString().slice(11, 23);
+      const color = level === "ERR" ? "var(--err-fg)" : (level === "WARN" ? "var(--warn-fg)" : "var(--ok-fg)");
+      logs.unshift(`<div class="log-line"><span style="color:var(--muted);">[${ts}]</span> <strong style="color:${color};">[${level}]</strong> ${msg}</div>`);
+      if (logs.length > 30) logs.pop();
+      document.getElementById("execLog").innerHTML = logs.join("");
+    }
+
+    function evaluateRiskGate() {
+      const sym = document.getElementById("symSelect").value;
+      const side = document.getElementById("sideSelect").value;
+      const spec = SYMBOLS[sym];
+      const equity = Math.max(1, Number(document.getElementById("eqInput").value) || 5000);
+      const riskPct = Math.max(0.05, Number(document.getElementById("riskPctInput").value) || 1);
+      const rawEntry = Math.max(0.01, Number(document.getElementById("entryInput").value) || spec.defaultEntry);
+      const rawSl = Math.max(0.01, Number(document.getElementById("slInput").value) || spec.defaultSl);
+      const maxLev = Math.max(1, Number(document.getElementById("maxLevInput").value) || 10);
+      const curDd = Math.max(0, Number(document.getElementById("ddInput").value) || 0);
+
+      const tickDec = decimalsOf(spec.tickSize);
+      const stepDec = decimalsOf(spec.stepSize);
+      const normEntry = floorToStep(rawEntry, spec.tickSize);
+      const normSl = floorToStep(rawSl, spec.tickSize);
+
+      const stopDist = Math.abs(normEntry - normSl);
+      const riskUsd = equity * (riskPct / 100);
+      const rawQty = stopDist > 0 ? riskUsd / stopDist : 0;
+      const normQty = floorToStep(rawQty, spec.stepSize);
+      const notional = normQty * normEntry;
+      const effLev = notional / equity;
+      const initMargin = notional / maxLev;
+
+      const bucket = Math.floor(Date.now() / 60000);
+      const clientOid = `astra-${envMode.toLowerCase()}-${sym.slice(0, 3).toLowerCase()}-${hashShort(`${sym}:${side}:${normEntry}:${bucket}`)}`;
+
+      const reasons = [];
+      if (killSwitchArmed) reasons.push("Emergency Kill-Switch is ARMED");
+      if (curDd >= 4.0) reasons.push(`Daily Drawdown ${curDd.toFixed(1)}% >= 4.0% Circuit Breaker`);
+      if (side === "BUY" && normSl >= normEntry) reasons.push("LONG Stop-Loss must be strictly below Entry Price");
+      if (side === "SELL" && normSl <= normEntry) reasons.push("SHORT Stop-Loss must be strictly above Entry Price");
+      if (normQty <= 0) reasons.push(`Normalized LOT_SIZE quantity is 0 (min step ${spec.stepSize})`);
+      if (notional < spec.minNotional) reasons.push(`Notional $${notional.toFixed(2)} < MIN_NOTIONAL ($${spec.minNotional})`);
+      if (effLev > maxLev) reasons.push(`Effective Leverage ${effLev.toFixed(2)}x exceeds Cap (${maxLev}x)`);
+
+      const passed = reasons.length === 0;
+      const baseSym = sym.replace("USDT", "");
+
+      document.getElementById("kpiVerdict").textContent = passed ? "PASS ✅" : "BLOCKED 🛑";
+      document.getElementById("kpiVerdict").style.color = passed ? "var(--ok-fg)" : "var(--err-fg)";
+      document.getElementById("kpiNormQty").textContent = `${normQty.toFixed(stepDec)} ${baseSym}`;
+      document.getElementById("kpiNotional").textContent = `$${notional.toFixed(2)} (${effLev.toFixed(2)}x)`;
+      document.getElementById("kpiMargin").textContent = `$${initMargin.toFixed(2)}`;
+      document.getElementById("kpiClientOid").textContent = clientOid;
+
+      document.getElementById("rawQtySpan").textContent = `${rawQty.toFixed(6)} ${baseSym}`;
+      document.getElementById("normPriceSpan").textContent = `${normEntry.toFixed(tickDec)} / SL ${normSl.toFixed(tickDec)}`;
+
+      const reasonEl = document.getElementById("gateReasonText");
+      if (passed) {
+        reasonEl.textContent = `PASS: Risk $${riskUsd.toFixed(2)} (${riskPct}%) · LOT_SIZE=${spec.stepSize} · PRICE_FILTER=${spec.tickSize} verified.`;
+        reasonEl.style.color = "var(--ok-fg)";
+      } else {
+        reasonEl.textContent = `BLOCKED: ${reasons.join(" | ")}`;
+        reasonEl.style.color = "var(--err-fg)";
+      }
+
+      return { sym, side, normQty, stepDec, normEntry, normSl, tickDec, notional, effLev, clientOid, passed, reasons };
+    }
+
+    function setEnv(mode) {
+      envMode = mode;
+      const banner = document.getElementById("envBanner");
+      const badge = document.getElementById("envBadge");
+      const restUrl = document.getElementById("envRestUrl");
+      const wsUrl = document.getElementById("envWsUrl");
+      const btnDemo = document.getElementById("btnDemoEnv");
+      const btnLive = document.getElementById("btnLiveEnv");
+
+      if (mode === "LIVE") {
+        banner.classList.add("live");
+        badge.className = "badge warn";
+        badge.textContent = "BINANCE_LIVE_MAINNET (ARMED)";
+        restUrl.textContent = "https://fapi.binance.com";
+        wsUrl.textContent = "wss://fstream.binance.com/ws";
+        btnDemo.className = "";
+        btnLive.className = "active-live";
+        appendLog("WARN", "Switched ExchangeAdapter → BINANCE_LIVE_MAINNET (fapi.binance.com) · Zero strategy rebuild · ISOLATED margin & Live Secret Namespace active.");
+      } else {
+        banner.classList.remove("live");
+        badge.className = "badge ok";
+        badge.textContent = "BINANCE_DEMO_TESTNET";
+        restUrl.textContent = "https://testnet.binancefuture.com";
+        wsUrl.textContent = "wss://stream.binancefuture.com/ws";
+        btnDemo.className = "active-demo";
+        btnLive.className = "";
+        appendLog("OK", "Switched ExchangeAdapter → BINANCE_DEMO_TESTNET (testnet.binancefuture.com) · Safe paper execution active.");
+      }
+      evaluateRiskGate();
+    }
+
+    function renderOrderBook() {
+      document.getElementById("obSnapshotBody").innerHTML = Object.entries(SYMBOLS).map(([sym, s]) => {
+        const bullish = s.obi.startsWith("+");
+        return `<tr>
+          <td><strong>${sym}</strong></td>
+          <td class="num">${s.bid.toFixed(decimalsOf(s.tickSize))}</td>
+          <td class="num">${s.ask.toFixed(decimalsOf(s.tickSize))}</td>
+          <td class="num" style="color:${bullish ? "var(--ok-fg)" : "var(--err-fg)"};font-weight:700;">${s.obi}</td>
+          <td><span class="badge ${bullish ? "ok" : "warn"}">${bullish ? "LONG Momentum" : "SHORT Mean-Rev"}</span></td>
+        </tr>`;
+      }).join("");
+    }
+
+    function renderAuditChecklist() {
+      const container = document.getElementById("auditList");
+      container.innerHTML = AUDIT_ITEMS.map((item, idx) => `
+        <label class="audit-item">
+          <input type="checkbox" data-audit="${idx}" ${item.checked ? "checked" : ""}>
+          <div>
+            <strong style="display:block;font-size:0.93rem;">${item.title}</strong>
+            <span style="font-size:0.82rem;color:var(--muted);">${item.detail}</span>
+          </div>
+        </label>
+      `).join("");
+
+      const updateAuditScore = () => {
+        const done = AUDIT_ITEMS.filter(i => i.checked).length;
+        const pct = Math.round((done / AUDIT_ITEMS.length) * 100);
+        document.getElementById("auditScoreInline").textContent = `${pct}%`;
+        const badge = document.getElementById("auditScoreBadge");
+        badge.textContent = `Readiness Score: ${done} / ${AUDIT_ITEMS.length} (${pct}%)`;
+        badge.className = `badge ${pct === 100 ? "ok" : (pct >= 66 ? "warn" : "err")}`;
+      };
+
+      container.querySelectorAll("[data-audit]").forEach(cb => {
+        cb.addEventListener("change", () => {
+          AUDIT_ITEMS[+cb.dataset.audit].checked = cb.checked;
+          updateAuditScore();
+        });
+      });
+      updateAuditScore();
+    }
+
+    document.getElementById("symSelect").addEventListener("change", e => {
+      const spec = SYMBOLS[e.target.value];
+      document.getElementById("entryInput").value = spec.defaultEntry;
+      document.getElementById("slInput").value = spec.defaultSl;
+      evaluateRiskGate();
+    });
+
+    ["sideSelect", "eqInput", "riskPctInput", "entryInput", "slInput", "maxLevInput", "ddInput"].forEach(id => {
+      document.getElementById(id).addEventListener("input", evaluateRiskGate);
+    });
+
+    document.getElementById("btnDemoEnv").addEventListener("click", () => setEnv("DEMO"));
+    document.getElementById("btnLiveEnv").addEventListener("click", () => setEnv("LIVE"));
+
+    document.getElementById("fireSignalBtn").addEventListener("click", () => {
+      const state = evaluateRiskGate();
+      const endpoint = envMode === "LIVE" ? "https://fapi.binance.com/fapi/v1/order" : "https://testnet.binancefuture.com/fapi/v1/order";
+      if (!state.passed) {
+        appendLog("ERR", `RiskGate REJECTED ${state.side} ${state.sym}: ${state.reasons.join("; ")} (0 HTTP calls sent).`);
+        showToast("Order blocked safely by Pre-Trade Risk Gate!");
+        return;
+      }
+      const latency = Math.floor(24 + Math.random() * 35);
+      appendLog(
+        "OK",
+        `POST ${endpoint} → ${state.side} ${state.normQty.toFixed(state.stepDec)} ${state.sym} @ ${state.normEntry.toFixed(state.tickDec)} (SL ${state.normSl.toFixed(state.tickDec)}) · newClientOrderId=${state.clientOid} · HTTP 200 FILLED (${latency}ms)`
+      );
+      showToast(`Executed ${ envMode } ${state.side} ${state.sym} [${latency}ms]`);
+    });
+
+    document.getElementById("simTickBtn").addEventListener("click", () => {
+      Object.values(SYMBOLS).forEach(s => {
+        const drift = (Math.random() - 0.48) * s.tickSize * 8;
+        s.bid = Math.max(s.tickSize, s.bid + drift);
+        s.ask = s.bid + s.tickSize * 2;
+        const obiVal = ((Math.random() - 0.42) * 0.9).toFixed(2);
+        s.obi = (obiVal >= 0 ? "+" : "") + obiVal;
+      });
+      const sym = document.getElementById("symSelect").value;
+      document.getElementById("entryInput").value = SYMBOLS[sym].ask.toFixed(decimalsOf(SYMBOLS[sym].tickSize));
+      renderOrderBook();
+      evaluateRiskGate();
+      appendLog("OK", `WebSocket DepthUpdate @100ms processed for ${sym}: BestAsk=${SYMBOLS[sym].ask.toFixed(decimalsOf(SYMBOLS[sym].tickSize))}, OBI=${SYMBOLS[sym].obi}`);
+    });
+
+    document.getElementById("killSwitchBtn").addEventListener("click", e => {
+      killSwitchArmed = !killSwitchArmed;
+      e.target.textContent = killSwitchArmed ? "✅ Disarm Kill-Switch" : "🛑 Arm Kill-Switch";
+      appendLog(
+        killSwitchArmed ? "ERR" : "OK",
+        killSwitchArmed
+          ? "EMERGENCY KILL-SWITCH ARMED: DELETE /fapi/v1/allOpenOrders dispatched & new entries locked."
+          : "Kill-Switch disarmed: ASTRA RiskGate resumed normal pre-trade evaluation."
+      );
+      evaluateRiskGate();
+    });
+
+    document.getElementById("clearLogBtn").addEventListener("click", () => {
+      logs = [];
+      appendLog("OK", "Execution trace buffer cleared.");
+    });
+
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
+      });
+    });
+
+    document.getElementById("themeBtn").addEventListener("click", () => {
+      const meta = document.querySelector('meta[name="color-scheme"]');
+      const next = meta.content === "dark" ? "light" : "dark";
+      meta.content = next;
+      document.documentElement.style.colorScheme = next;
+      try { localStorage.setItem("color-scheme", next); } catch {}
+    });
+
+    document.getElementById("copyPyBtn").addEventListener("click", () => {
+      navigator.clipboard.writeText(document.getElementById("pyCodeBlock").innerText);
+      showToast("Copied modular Python ExchangeAdapter to clipboard!");
+    });
+
+    document.getElementById("exportAuditBtn").addEventListener("click", () => {
+      const state = evaluateRiskGate();
+      const md = `# ASTRA AI Crypto Trading Agent — Initial Architecture & Replit Audit Report\n\n` +
+        `- **Active Adapter Mode:** ${envMode} (${envMode === "LIVE" ? "https://fapi.binance.com" : "https://testnet.binancefuture.com"})\n` +
+        `- **Sample Validated Order:** ${state.side} ${state.normQty} ${state.sym} @ ${state.normEntry} (SL ${state.normSl}) | ClientOID \`${state.clientOid}\`\n\n` +
+        `## Replit Codebase Hardening Checklist\n\n` +
+        AUDIT_ITEMS.map(i => `- [${i.checked ? "x" : " "}] **${i.title}** — ${i.detail}`).join("\n") + "\n";
+      const blob = new Blob([md], { type: "text/markdown;charset=utf-8;" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "ASTRA_Trading_Agent_Replit_Audit.md";
+      a.click();
+      showToast("Exported ASTRA Architecture & Replit Audit (.md)");
+    });
+
+    appendLog("OK", "ASTRA Boot Sequence Complete · Loaded /fapi/v1/exchangeInfo filters · Mode=BINANCE_DEMO_TESTNET.");
+    appendLog("OK", "ListenKey User-Data WebSocket stream connected (30m keepalive scheduler active).");
+    renderOrderBook();
+    renderAuditChecklist();
+    evaluateRiskGate();
+  </script>
+</body>
+</html>

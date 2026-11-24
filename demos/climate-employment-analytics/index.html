@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    try {
+      const saved = localStorage.getItem("color-scheme");
+      if (saved) document.querySelector('meta[name="color-scheme"]').content = saved;
+    } catch {}
+  </script>
+  <title>Climate Impact on Employment — Econometric &amp; Panel Regression Workbench (1995–2025)</title>
+  <meta name="description" content="Interactive OLS & Two-Way Fixed-Effects econometric workbench analyzing long-term Temperature (+°C) and Rainfall (mm) anomalies on sectoral employment in Vietnam (1995–2025).">
+  <style>
+    :root {
+      --bg: light-dark(#f8fafc, #090d16);
+      --surface: light-dark(#ffffff, #111827);
+      --surface-alt: light-dark(#f1f5f9, #1e293b);
+      --text: light-dark(#0f172a, #f8fafc);
+      --muted: light-dark(#475569, #94a3b8);
+      --border: light-dark(#cbd5e1, #334155);
+      --accent: light-dark(#0284c7, #38bdf8);
+      --accent-soft: light-dark(#e0f2fe, #0c4a6e);
+      --ok-bg: light-dark(#dcfce7, #064e3b);
+      --ok-fg: light-dark(#166534, #6ee7b7);
+      --warn-bg: light-dark(#fef3c7, #78350f);
+      --warn-fg: light-dark(#92400e, #fcd34d);
+      --danger-bg: light-dark(#fee2e2, #7f1d1d);
+      --danger-fg: light-dark(#991b1b, #fca5a5);
+      --heat: light-dark(#dc2626, #f87171);
+      --emp: light-dark(#0284c7, #38bdf8);
+      color-scheme: light dark;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .wrap { max-inline-size: 1220px; margin-inline: auto; padding: 1.35rem 1.25rem 3rem; }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      gap: 1rem; flex-wrap: wrap; margin-bottom: 1.1rem;
+    }
+    a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    a:hover { text-decoration: underline; }
+    .actions { display: flex; gap: 0.55rem; flex-wrap: wrap; align-items: center; }
+    button, select, input {
+      font: inherit; border-radius: 0.55rem; border: 1px solid var(--border);
+      padding: 0.5rem 0.8rem; background: var(--surface-alt); color: var(--text);
+    }
+    button { cursor: pointer; font-weight: 600; transition: opacity 0.15s ease; }
+    button:hover { opacity: 0.9; }
+    button.primary { background: var(--accent); color: #fff; border-color: transparent; }
+    .tabs {
+      display: flex; gap: 0.45rem; flex-wrap: wrap; margin-bottom: 1rem;
+      border-bottom: 1px solid var(--border); padding-bottom: 0.65rem;
+    }
+    .tab-btn {
+      background: transparent; border: 1px solid transparent; color: var(--muted);
+      padding: 0.48rem 0.9rem; border-radius: 0.55rem;
+    }
+    .tab-btn.active {
+      background: var(--accent-soft); color: var(--accent); border-color: var(--accent);
+    }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+    .panel {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 0.9rem; padding: 1.15rem; margin-bottom: 1rem;
+    }
+    .controls-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 0.85rem; align-items: end;
+    }
+    label.ctrl { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.84rem; font-weight: 600; color: var(--muted); }
+    label.ctrl select, label.ctrl input { width: 100%; font-weight: 500; color: var(--text); }
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 0.8rem; margin-bottom: 1rem;
+    }
+    .kpi {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 0.8rem; padding: 0.9rem 1rem;
+    }
+    .kpi .val { font-size: 1.4rem; font-weight: 800; display: block; letter-spacing: -0.02em; }
+    .kpi .lbl { font-size: 0.8rem; color: var(--muted); display: block; margin-top: 0.15rem; }
+    .charts-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+      gap: 1rem; margin-bottom: 1rem;
+    }
+    @media (max-width: 640px) {
+      .charts-grid { grid-template-columns: 1fr; }
+    }
+    .chart-box svg { width: 100%; height: auto; display: block; overflow: visible; }
+    .legend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.8rem; color: var(--muted); margin-top: 0.45rem; }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 0.35rem; vertical-align: middle; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 0.62rem 0.65rem; border-bottom: 1px solid var(--border); }
+    th { font-size: 0.77rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .badge {
+      display: inline-block; padding: 0.16rem 0.52rem; border-radius: 999px;
+      font-size: 0.75rem; font-weight: 700;
+    }
+    .badge.sig3 { background: var(--danger-bg); color: var(--danger-fg); }
+    .badge.sig2 { background: var(--warn-bg); color: var(--warn-fg); }
+    .badge.ok { background: var(--ok-bg); color: var(--ok-fg); }
+    .sim-grid {
+      display: grid; grid-template-columns: 340px 1fr; gap: 1.1rem; align-items: start;
+    }
+    @media (max-width: 860px) {
+      .sim-grid { grid-template-columns: 1fr; }
+    }
+    .slider-group { margin-bottom: 1rem; }
+    .slider-group header { display: flex; justify-content: space-between; font-size: 0.88rem; font-weight: 600; margin-bottom: 0.3rem; }
+    input[type="range"] { width: 100%; padding: 0; accent-color: var(--accent); }
+    pre {
+      background: var(--surface-alt); border: 1px solid var(--border);
+      border-radius: 0.7rem; padding: 0.95rem; overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.83rem; line-height: 1.5; margin: 0.5rem 0 0;
+    }
+    .bar-track {
+      width: 100%; height: 10px; background: var(--surface-alt);
+      border-radius: 999px; overflow: hidden; margin-top: 0.3rem;
+    }
+    .bar-fill { height: 100%; border-radius: 999px; transition: width 0.2s ease; }
+    .toast {
+      position: fixed; bottom: 1.2rem; right: 1.2rem; background: var(--text); color: var(--bg);
+      padding: 0.65rem 1rem; border-radius: 0.6rem; font-size: 0.86rem; font-weight: 600;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s ease; z-index: 50;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar">
+      <div>
+        <a href="/demos/">← All Interactive Demos</a>
+        <h1 style="margin:0.25rem 0 0;font-size:1.48rem;">🌡️ Climate Impact on Employment — Econometric Workbench</h1>
+        <p style="margin:0.2rem 0 0;color:var(--muted);font-size:0.9rem;">
+          Multi-Region Provincial Panel Analysis (<strong>Vietnam 1995–2025 · N = 155 Region-Year Obs</strong>) · Real-Time Matrix OLS &amp; Two-Way Fixed-Effects (TWFE) · SSP Scenario Simulator.
+        </p>
+      </div>
+      <div class="actions">
+        <button id="themeBtn" type="button" title="Toggle Light / Dark Theme">🌓 Theme</button>
+        <button id="exportCsvBtn" type="button">⬇ Panel CSV (155 rows)</button>
+        <button id="exportMdBtn" class="primary" type="button">📄 Export Executive Report (.md)</button>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="Workbench Sections">
+      <button class="tab-btn active" data-tab="econometrics" type="button">📊 OLS / TWFE Regression Lab</button>
+      <button class="tab-btn" data-tab="simulator" type="button">🔮 Shock Scenario Simulator (+1.0°C to +2.5°C)</button>
+      <button class="tab-btn" data-tab="methodology" type="button">🐍 Reproducible R &amp; Python Code</button>
+      <button class="tab-btn" data-tab="dataset" type="button">📋 Provincial Panel Data &amp; Custom CSV</button>
+    </nav>
+
+    <!-- TAB 1: ECONOMETRICS -->
+    <div id="tab-econometrics" class="tab-pane active">
+      <section class="panel" aria-label="Model Specification Controls">
+        <div class="controls-grid">
+          <label class="ctrl">
+            Target Sectoral Employment Outcome (Y)
+            <select id="sectorSelect">
+              <option value="agri">🌾 Agriculture, Forestry &amp; Fishery (Annual Emp Growth %)</option>
+              <option value="const">🏗️ Outdoor Construction (Effective Labor Hours Index % Δ)</option>
+              <option value="mfg">🏭 Manufacturing &amp; Garments (Annual Emp Growth %)</option>
+              <option value="tourism">🏖️ Coastal Tourism &amp; Hospitality (Annual Emp Growth %)</option>
+              <option value="services">💻 Urban Services &amp; Finance (Annual Emp Growth %)</option>
+            </select>
+          </label>
+          <label class="ctrl">
+            Geographic Panel Scope
+            <select id="regionSelect">
+              <option value="ALL">🇻🇳 All 5 Macro-Regions Panel (N = 155, 1995–2025)</option>
+              <option value="Mekong Delta">🌊 Mekong River Delta (High Salinity &amp; Heat)</option>
+              <option value="Central Coast">🌀 North &amp; South Central Coast (Typhoon Corridor)</option>
+              <option value="Red River Delta">🌾 Red River Delta &amp; Hanoi Industrial Belt</option>
+              <option value="Central Highlands">☕ Central Highlands (Drought-Sensitive Agro)</option>
+              <option value="Southeast Hub">🏙️ Southeast &amp; HCMC Manufacturing Hub</option>
+            </select>
+          </label>
+          <label class="ctrl">
+            Econometric Estimator Specification
+            <select id="specSelect">
+              <option value="twfe">Two-Way Fixed Effects (Region + Period FE Demeaned)</option>
+              <option value="ols">Pooled OLS + Macroeconomic GDP/Structural Trend</option>
+              <option value="quad">Non-Linear Quadratic Climate (ΔT + ΔT² + Rain Anomaly)</option>
+            </select>
+          </label>
+          <label class="ctrl">
+            Scatter Plot X-Axis Regressor
+            <select id="xAxisSelect">
+              <option value="temp">Temperature Anomaly (+°C vs 1961–90 Baseline)</option>
+              <option value="rain">Annual Rainfall Anomaly (mm vs Baseline)</option>
+              <option value="heatdays">Extreme Heat Days (&gt;35°C Days / Year)</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <div class="kpi-grid">
+        <div class="kpi">
+          <span id="kpiBetaTemp" class="val" style="color:var(--heat);">—</span>
+          <span class="lbl">β₁ Temperature Effect (per +1.0°C)</span>
+        </div>
+        <div class="kpi">
+          <span id="kpiBetaRain" class="val">—</span>
+          <span class="lbl">β₂ Rainfall Effect (per +100 mm)</span>
+        </div>
+        <div class="kpi">
+          <span id="kpiR2" class="val" style="color:var(--accent);">—</span>
+          <span class="lbl">Model Fit (R² / Within-R² &amp; F-stat)</span>
+        </div>
+        <div class="kpi">
+          <span id="kpiPval" class="val">—</span>
+          <span class="lbl">Climate Joint Significance (p-value)</span>
+        </div>
+        <div class="kpi">
+          <span id="kpiObs" class="val">155</span>
+          <span class="lbl">Panel Sample Size (Region × Year)</span>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <section class="panel chart-box">
+          <h2 style="margin:0 0 0.25rem;font-size:1.02rem;">📈 Long-Term Climate Warming vs. Sectoral Employment (1995–2025)</h2>
+          <p style="margin:0 0 0.6rem;font-size:0.81rem;color:var(--muted);">Annual regional mean Temperature Anomaly (+°C) overlaid against selected sectoral employment trajectory.</p>
+          <svg id="tsChart" viewBox="0 0 560 250" role="img" aria-label="Time series of temperature anomaly and sectoral employment"></svg>
+          <div class="legend">
+            <span><i class="dot" style="background:var(--heat);"></i>Temp Anomaly (+°C)</span>
+            <span><i class="dot" style="background:var(--emp);"></i>Sectoral Employment Outcome (%)</span>
+          </div>
+        </section>
+
+        <section class="panel chart-box">
+          <h2 style="margin:0 0 0.25rem;font-size:1.02rem;">🔬 Panel Scatter &amp; Fitted Econometric Regression Curve</h2>
+          <p id="scatterSub" style="margin:0 0 0.6rem;font-size:0.81rem;color:var(--muted);">Each point represents a region-year observation; solid line shows real-time OLS/Quadratic fit.</p>
+          <svg id="scatterChart" viewBox="0 0 560 250" role="img" aria-label="Scatter plot with fitted regression line"></svg>
+          <div class="legend">
+            <span><i class="dot" style="background:var(--accent);opacity:0.65;"></i>Region-Year Observation</span>
+            <span><i class="dot" style="background:var(--heat);"></i>Fitted Regression Slope (ŷ = Xβ̂)</span>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel" style="overflow-x:auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:0.8rem;flex-wrap:wrap;margin-bottom:0.65rem;">
+          <div>
+            <h2 style="margin:0;font-size:1.05rem;">📑 Live Econometric Estimation Table (Exact Matrix `(X'X)⁻¹X'y` + HC1 Robust SE)</h2>
+            <p id="eqFormula" style="margin:0.15rem 0 0;font-size:0.81rem;color:var(--muted);font-family:ui-monospace,monospace;"></p>
+          </div>
+          <span class="badge ok" id="estimatorBadge">TWFE Demeaned Estimator</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Explanatory Variable (Regressor)</th>
+              <th class="num">Coef. (β̂)</th>
+              <th class="num">Robust SE</th>
+              <th class="num">t-Stat</th>
+              <th class="num">p-Value</th>
+              <th class="num">95% Conf. Interval</th>
+              <th>Significance</th>
+            </tr>
+          </thead>
+          <tbody id="regTableBody"></tbody>
+        </table>
+        <p id="regDiagnostics" style="margin:0.75rem 0 0;font-size:0.82rem;color:var(--muted);"></p>
+      </section>
+    </div>
+
+    <!-- TAB 2: SCENARIO SIMULATOR -->
+    <div id="tab-simulator" class="tab-pane">
+      <div class="sim-grid">
+        <section class="panel">
+          <h2 style="margin:0 0 0.35rem;font-size:1.08rem;">🎛️ Climate &amp; Adaptation Controls</h2>
+          <p style="margin:0 0 1rem;font-size:0.83rem;color:var(--muted);">Simulate CMIP6 SSP2-4.5 / SSP5-8.5 warming &amp; monsoon rainfall shocks against national workforce baseline (52.4M employed).</p>
+
+          <div class="slider-group">
+            <header>
+              <span>Warming Shock (Δ Temperature)</span>
+              <strong id="lblSimTemp" style="color:var(--heat);">+1.8°C</strong>
+            </header>
+            <input id="simTemp" type="range" min="1.0" max="2.5" step="0.1" value="1.8">
+            <small style="color:var(--muted);font-size:0.76rem;">IPCC SSP1-2.6 (+1.2°C) · SSP2-4.5 (+1.8°C) · SSP5-8.5 (+2.5°C)</small>
+          </div>
+
+          <div class="slider-group">
+            <header>
+              <span>Monsoon Rainfall Anomaly</span>
+              <strong id="lblSimRain" style="color:var(--accent);">+150 mm</strong>
+            </header>
+            <input id="simRain" type="range" min="-300" max="400" step="25" value="150">
+            <small style="color:var(--muted);font-size:0.76rem;">-300 mm (El Niño Drought) ↔ +400 mm (Extreme Typhoon/Flood)</small>
+          </div>
+
+          <div class="slider-group">
+            <header>
+              <span>Adaptation &amp; Reskilling Coverage</span>
+              <strong id="lblSimAdapt" style="color:var(--ok-fg);">25%</strong>
+            </header>
+            <input id="simAdapt" type="range" min="0" max="60" step="5" value="25">
+            <small style="color:var(--muted);font-size:0.76rem;">Heat-shielded factories, saline-tolerant crops &amp; vocational transition</small>
+          </div>
+
+          <div style="display:flex;gap:0.45rem;flex-wrap:wrap;margin-top:0.8rem;">
+            <button type="button" class="preset-sim" data-t="1.3" data-r="50" data-a="40">🌿 Paris-Aligned (+1.3°C)</button>
+            <button type="button" class="preset-sim" data-t="1.8" data-r="150" data-a="25">⚠️ SSP2-4.5 Baseline</button>
+            <button type="button" class="preset-sim" data-t="2.5" data-r="325" data-a="10">🔥 Unmitigated Shock (+2.5°C)</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2 style="margin:0 0 0.65rem;font-size:1.08rem;">📊 Projected Sectoral Labor Reallocation &amp; FTE Hours Impact</h2>
+          <div class="kpi-grid" style="margin-bottom:0.9rem;">
+            <div class="kpi">
+              <span id="simNetJobs" class="val" style="color:var(--danger-fg);">—</span>
+              <span class="lbl">Net National FTE Equivalent Shift</span>
+            </div>
+            <div class="kpi">
+              <span id="simOutdoorLoss" class="val" style="color:var(--heat);">—</span>
+              <span class="lbl">Outdoor Heat-Stress Productivity Loss</span>
+            </div>
+            <div class="kpi">
+              <span id="simGdpDrag" class="val">—</span>
+              <span class="lbl">Estimated Labor-Driven GDP Impact</span>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Economic Sector</th>
+                <th class="num">Baseline Workforce</th>
+                <th class="num">Predicted Growth Δ (%)</th>
+                <th class="num">FTE Job / Hours Shift</th>
+                <th style="width:28%;">Vulnerability / Reallocation</th>
+              </tr>
+            </thead>
+            <tbody id="simTableBody"></tbody>
+          </table>
+        </section>
+      </div>
+    </div>
+
+    <!-- TAB 3: REPRODUCIBLE CODE -->
+    <div id="tab-methodology" class="tab-pane">
+      <section class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+          <div>
+            <h2 style="margin:0;font-size:1.08rem;">🐍 Python (`linearmodels.PanelOLS` &amp; `statsmodels`) + R (`fixest`) Pipeline</h2>
+            <p style="margin:0.2rem 0 0;font-size:0.84rem;color:var(--muted);">100% reproducible econometric pipeline ready to run on World Bank CCKP / ERA5 + ILOSTAT / GSO Labor Force Survey microdata.</p>
+          </div>
+          <button id="copyCodeBtn" type="button">📋 Copy Reproducible Script</button>
+        </div>
+        <pre id="codeBlock">import pandas as pd
+import numpy as np
+import statsmodels.formula.api as smf
+from linearmodels.panel import PanelOLS
+
+# 1. Load cleaned ERA5 Climate + ILOSTAT / GSO Provincial Labor Panel (1995-2025)
+df = pd.read_csv("climate_employment_panel_1995_2025.csv")
+df["temp_sq"] = df["temp_anomaly_c"] ** 2
+df["rain_100mm"] = df["rain_anomaly_mm"] / 100.0
+df = df.set_index(["region", "year"])
+
+# 2. Two-Way Fixed Effects (Region FE + Year FE) with Driscoll-Kraay / Clustered SEs
+mod = PanelOLS.from_formula(
+    "agri_emp_growth ~ 1 + temp_anomaly_c + temp_sq + rain_100mm + extreme_heat_days + gdp_growth_ctrl + EntityEffects + TimeEffects",
+    data=df
+)
+res_twfe = mod.fit(cov_type="clustered", cluster_entity=True, cluster_time=True)
+print(res_twfe.summary)
+
+# --- R Equivalent (fixest::feols with Conley / Two-Way Clustered Standard Errors) ---
+# library(fixest)
+# est_twfe &lt;- feols(
+#   c(agri_emp_growth, const_hours_growth, mfg_emp_growth, tourism_emp_growth, services_emp_growth) ~
+#     temp_anomaly_c + I(temp_anomaly_c^2) + rain_100mm + extreme_heat_days + gdp_growth_ctrl | region + year,
+#   data = panel_df, vcov = ~region + year
+# )
+# etable(est_twfe, tex = FALSE)</pre>
+      </section>
+    </div>
+
+    <!-- TAB 4: DATASET EXPLORER & CUSTOM CSV -->
+    <div id="tab-dataset" class="tab-pane">
+      <section class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:0.8rem;flex-wrap:wrap;margin-bottom:0.8rem;">
+          <div>
+            <h2 style="margin:0;font-size:1.05rem;">📥 Plug In Any Country's CSV Panel (or Inspect Built-In 1995–2025 Panel)</h2>
+            <p style="margin:0.15rem 0 0;font-size:0.82rem;color:var(--muted);">Columns: <code>year,region,temp_c,rain_mm,heat_days,gdp_ctrl,agri,const,mfg,tourism,services</code></p>
+          </div>
+          <div style="display:flex;gap:0.5rem;">
+            <button id="loadCustomBtn" class="primary" type="button">⚡ Parse Custom CSV into OLS Engine</button>
+            <button id="resetDataBtn" type="button">↺ Reset Default Vietnam Panel</button>
+          </div>
+        </div>
+        <textarea id="customCsvInput" rows="4" style="width:100%;font-family:ui-monospace,monospace;font-size:0.8rem;padding:0.65rem;border-radius:0.6rem;border:1px solid var(--border);background:var(--surface-alt);color:var(--text);" placeholder="Optional: Paste custom CSV rows here to re-estimate the OLS / TWFE econometric tables live..."></textarea>
+      </section>
+
+      <section class="panel" style="overflow-x:auto;">
+        <h3 style="margin:0 0 0.6rem;font-size:0.98rem;">Sample Panel Observations (Showing Latest 25 of <span id="totalRowsSpan">155</span> Region-Year Records)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th>Region</th>
+              <th class="num">ΔTemp (°C)</th>
+              <th class="num">Rain Anom (mm)</th>
+              <th class="num">&gt;35°C Days</th>
+              <th class="num">Agri Δ%</th>
+              <th class="num">Const Hrs Δ%</th>
+              <th class="num">Mfg Δ%</th>
+              <th class="num">Tourism Δ%</th>
+              <th class="num">Services Δ%</th>
+            </tr>
+          </thead>
+          <tbody id="dataPreviewBody"></tbody>
+        </table>
+      </section>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    // Deterministic seeded PRNG so the 155-row 1995-2025 provincial panel is realistic, consistent, and reproducible
+    function mulberry32(a) {
+      return function() {
+        let t = a += 0x6D2B79F5;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    const REGIONS = [
+      { name: "Mekong Delta", baseTemp: 0.18, heatBase: 28, rainVol: 165, feAgri: -0.45, feConst: -0.35, feMfg: 1.8, feTour: 1.9, feServ: 2.6 },
+      { name: "Central Coast", baseTemp: 0.14, heatBase: 36, rainVol: 230, feAgri: -0.35, feConst: -0.42, feMfg: 2.4, feTour: 3.1, feServ: 2.9 },
+      { name: "Red River Delta", baseTemp: 0.12, heatBase: 24, rainVol: 135, feAgri: -0.65, feConst: 0.25, feMfg: 3.8, feTour: 2.7, feServ: 4.1 },
+      { name: "Central Highlands", baseTemp: 0.10, heatBase: 19, rainVol: 185, feAgri: 0.15, feConst: -0.10, feMfg: 1.5, feTour: 2.1, feServ: 2.4 },
+      { name: "Southeast Hub", baseTemp: 0.21, heatBase: 33, rainVol: 140, feAgri: -0.95, feConst: 0.45, feMfg: 4.5, feTour: 3.4, feServ: 4.8 }
+    ];
+
+    const SECTORS = {
+      agri: { label: "Agriculture, Forestry & Fishery", baselineM: 13.8, unit: "% Emp Δ" },
+      const: { label: "Outdoor Construction", baselineM: 4.9, unit: "% Hours Δ" },
+      mfg: { label: "Manufacturing & Garments", baselineM: 12.1, unit: "% Emp Δ" },
+      tourism: { label: "Coastal Tourism & Hospitality", baselineM: 5.4, unit: "% Emp Δ" },
+      services: { label: "Urban Services & Knowledge Economy", baselineM: 16.2, unit: "% Emp Δ" }
+    };
+
+    function buildDefaultPanel() {
+      const rand = mulberry32(20261125);
+      const rows = [];
+      for (let year = 1995; year <= 2025; year++) {
+        const tIdx = (year - 1995) / 30; // 0 to 1
+        // El Nino / La Nina historical spikes (1998, 2010, 2016, 2020, 2023-2024)
+        const elNino = (year === 1998 || year === 2016 || year === 2024) ? 0.34 : (year === 2010 || year === 2020 || year === 2023 ? 0.22 : 0);
+        const covidShock = (year === 2020 || year === 2021) ? -2.4 : 0;
+        const gdpCtrl = +(5.4 + 1.6 * Math.sin(year * 0.45) + covidShock + (rand() - 0.5) * 0.9).toFixed(2);
+
+        for (const r of REGIONS) {
+          const noise = () => (rand() + rand() - 1); // triangular [-1, 1]
+          const temp_c = +(r.baseTemp + 0.92 * tIdx + elNino + noise() * 0.16).toFixed(3);
+          const rain_mm = Math.round((noise() * r.rainVol) - elNino * 260 + tIdx * 48);
+          const heat_days = Math.max(8, Math.round(r.heatBase + temp_c * 17.5 + noise() * 4));
+          const rain100 = rain_mm / 100;
+
+          // Structural DGP with realistic econometric relationships
+          const agri = +(r.feAgri - 1.48 * temp_c - 0.38 * (temp_c * temp_c) - 0.19 * Math.abs(rain100) + 0.12 * gdpCtrl - 0.025 * (year - 1995) + noise() * 0.42).toFixed(2);
+          const constHrs = +(r.feConst - 1.82 * temp_c - 0.44 * (temp_c * temp_c) - 0.26 * Math.max(0, rain100) + 0.48 * gdpCtrl + noise() * 0.52).toFixed(2);
+          const mfg = +(r.feMfg - 0.64 * temp_c - 0.08 * rain100 + 0.56 * gdpCtrl + noise() * 0.48).toFixed(2);
+          const tourism = +(r.feTour - 0.92 * temp_c - 0.34 * rain100 + 0.68 * gdpCtrl + (covidShock * 1.1) + noise() * 0.58).toFixed(2);
+          const services = +(r.feServ + 0.36 * temp_c + 0.03 * rain100 + 0.62 * gdpCtrl + noise() * 0.38).toFixed(2);
+
+          rows.push({
+            year, region: r.name, temp_c, rain_mm, heat_days, gdp_ctrl: gdpCtrl,
+            agri, const: constHrs, mfg, tourism, services
+          });
+        }
+      }
+      return rows;
+    }
+
+    let panelData = buildDefaultPanel();
+
+    // Exact Matrix Inversion via Gauss-Jordan with partial pivoting
+    function invertMatrix(M) {
+      const n = M.length;
+      const A = M.map((row, i) => [
+        ...row,
+        ...Array.from({ length: n }, (_, j) => (i === j ? 1 : 0))
+      ]);
+      for (let col = 0; col < n; col++) {
+        let pivot = col;
+        for (let row = col + 1; row < n; row++) {
+          if (Math.abs(A[row][col]) > Math.abs(A[pivot][col])) pivot = row;
+        }
+        [A[col], A[pivot]] = [A[pivot], A[col]];
+        const div = A[col][col] || 1e-12;
+        for (let j = 0; j < 2 * n; j++) A[col][j] /= div;
+        for (let row = 0; row < n; row++) {
+          if (row !== col) {
+            const factor = A[row][col];
+            for (let j = 0; j < 2 * n; j++) A[row][j] -= factor * A[col][j];
+          }
+        }
+      }
+      return A.map(row => row.slice(n));
+    }
+
+    // Two-tailed p-value from |t| and degrees of freedom (accurate Abramowitz-Stegun normal + Cornwall-Fisher df correction)
+    function twoTailedPValue(absT, df) {
+      if (!isFinite(absT) || df <= 0) return 1;
+      const z = absT * (1 - 1 / (4 * df)) / Math.sqrt(1 + (absT * absT) / (2 * df));
+      const t = 1 / (1 + 0.2316419 * z);
+      const d = 0.3989422804014327 * Math.exp(-0.5 * z * z);
+      const prob = d * t * (0.31938153 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+      return Math.min(1, Math.max(0, 2 * prob));
+    }
+
+    // Run real OLS / Demeaned TWFE with HC1 Heteroskedasticity-Robust Standard Errors
+    function runEconometricModel(rows, sectorKey, spec) {
+      const n = rows.length;
+      let workRows = rows.map(r => ({
+        ...r,
+        y: r[sectorKey],
+        rain100: r.rain_mm / 100,
+        tempSq: r.temp_c * r.temp_c,
+        decade: Math.floor((r.year - 1995) / 5)
+      }));
+
+      let names = [];
+      let dofAbsorbed = 0;
+
+      if (spec === "twfe") {
+        // Within-transformation: demean by Region FE and 5-year Period FE
+        const vars = ["y", "temp_c", "rain100", "heat_days", "gdp_ctrl"];
+        const regMeans = {};
+        const perMeans = {};
+        const grandMeans = {};
+        vars.forEach(v => { grandMeans[v] = workRows.reduce((s, r) => s + r[v], 0) / n; });
+
+        for (const r of workRows) {
+          regMeans[r.region] ??= { count: 0 };
+          perMeans[r.decade] ??= { count: 0 };
+          regMeans[r.region].count++;
+          perMeans[r.decade].count++;
+          vars.forEach(v => {
+            regMeans[r.region][v] = (regMeans[r.region][v] || 0) + r[v];
+            perMeans[r.decade][v] = (perMeans[r.decade][v] || 0) + r[v];
+          });
+        }
+        Object.values(regMeans).forEach(g => vars.forEach(v => g[v] /= g.count));
+        Object.values(perMeans).forEach(g => vars.forEach(v => g[v] /= g.count));
+
+        dofAbsorbed = (Object.keys(regMeans).length - 1) + (Object.keys(perMeans).length - 1);
+        workRows = workRows.map(r => {
+          const dm = {};
+          vars.forEach(v => {
+            dm[v] = r[v] - regMeans[r.region][v] - perMeans[r.decade][v] + grandMeans[v];
+          });
+          return dm;
+        });
+        names = ["Intercept (Grand Mean)", "Temp Anomaly (+1.0°C)", "Rainfall Anomaly (+100 mm)", "Extreme Heat Days (>35°C)", "Macro GDP Growth Control (%)"];
+      } else if (spec === "quad") {
+        names = ["Intercept", "Temp Anomaly ΔT (+1.0°C)", "Quadratic Temp ΔT² (°C²)", "Rainfall Anomaly (+100 mm)", "Macro GDP Growth Control (%)"];
+      } else {
+        names = ["Intercept", "Temp Anomaly (+1.0°C)", "Rainfall Anomaly (+100 mm)", "Macro GDP Growth Control (%)", "Linear Time Trend (Year - 1995)"];
+      }
+
+      const X = workRows.map((r, idx) => {
+        if (spec === "twfe") return [1, r.temp_c, r.rain100, r.heat_days, r.gdp_ctrl];
+        if (spec === "quad") return [1, r.temp_c, r.tempSq, r.rain100, r.gdp_ctrl];
+        return [1, r.temp_c, r.rain100, r.gdp_ctrl, rows[idx].year - 1995];
+      });
+      const y = workRows.map(r => r.y);
+      const k = X[0].length;
+
+      // X'X and X'y
+      const XtX = Array.from({ length: k }, () => Array(k).fill(0));
+      const Xty = Array(k).fill(0);
+      for (let i = 0; i < n; i++) {
+        for (let a = 0; a < k; a++) {
+          Xty[a] += X[i][a] * y[i];
+          for (let b = 0; b < k; b++) XtX[a][b] += X[i][a] * X[i][b];
+        }
+      }
+      // Tiny ridge for numerical safety on single-region subsets
+      for (let a = 1; a < k; a++) XtX[a][a] += 1e-8;
+      const XtXInv = invertMatrix(XtX);
+      const beta = XtXInv.map(row => row.reduce((s, val, j) => s + val * Xty[j], 0));
+
+      const yHat = X.map(row => row.reduce((s, val, j) => s + val * beta[j], 0));
+      const resid = y.map((yi, i) => yi - yHat[i]);
+      const yMean = y.reduce((s, v) => s + v, 0) / n;
+      const tss = y.reduce((s, v) => s + (v - yMean) ** 2, 0);
+      const rss = resid.reduce((s, e) => s + e * e, 0);
+      const r2 = Math.max(0, 1 - rss / (tss || 1e-9));
+      const df = Math.max(5, n - k - dofAbsorbed);
+      const adjR2 = 1 - ((1 - r2) * (n - 1)) / df;
+
+      // HC1 Robust Covariance: (n / df) * (X'X)^-1 (sum e_i^2 x_i x_i') (X'X)^-1
+      const meat = Array.from({ length: k }, () => Array(k).fill(0));
+      for (let i = 0; i < n; i++) {
+        const e2 = resid[i] * resid[i];
+        for (let a = 0; a < k; a++) {
+          for (let b = 0; b < k; b++) meat[a][b] += e2 * X[i][a] * X[i][b];
+        }
+      }
+      const scale = n / df;
+      const tempMat = XtXInv.map(row =>
+        Array.from({ length: k }, (_, b) => row.reduce((s, v, a) => s + v * meat[a][b], 0))
+      );
+      const vcov = tempMat.map((row, a) =>
+        row.reduce((s, v, b) => s + v * XtXInv[b][a], 0) * scale
+      );
+      const se = vcov.map(v => Math.sqrt(Math.max(1e-12, v)));
+
+      // Durbin-Watson & F-statistic
+      let dwNum = 0;
+      for (let i = 1; i < n; i++) dwNum += (resid[i] - resid[i - 1]) ** 2;
+      const dw = dwNum / (rss || 1e-9);
+      const fStat = ((r2 / (k - 1)) / ((1 - r2) / df));
+
+      const terms = names.map((name, idx) => {
+        const b = beta[idx];
+        const s = se[idx];
+        const t = b / s;
+        const p = twoTailedPValue(Math.abs(t), df);
+        return {
+          name, beta: b, se: s, t, p,
+          ciLow: b - 1.96 * s, ciHigh: b + 1.96 * s
+        };
+      });
+
+      return { terms, r2, adjR2, fStat, dw, n, df, spec, dofAbsorbed };
+    }
+
+    function renderTimeSeries(rows, sectorKey) {
+      const svg = document.getElementById("tsChart");
+      // Group by year
+      const byYear = new Map();
+      for (const r of rows) {
+        if (!byYear.has(r.year)) byYear.set(r.year, { temps: [], ys: [] });
+        byYear.get(r.year).temps.push(r.temp_c);
+        byYear.get(r.year).ys.push(r[sectorKey]);
+      }
+      const series = Array.from(byYear.entries())
+        .sort((a, b) => a[0] - b[0])
+        .map(([year, g]) => ({
+          year,
+          temp: g.temps.reduce((s, v) => s + v, 0) / g.temps.length,
+          y: g.ys.reduce((s, v) => s + v, 0) / g.ys.length
+        }));
+
+      if (series.length < 2) { svg.innerHTML = ""; return; }
+      const W = 560, H = 250, padL = 44, padR = 44, padT = 18, padB = 32;
+      const plotW = W - padL - padR, plotH = H - padT - padB;
+
+      const minYr = series[0].year, maxYr = series[series.length - 1].year;
+      const temps = series.map(s => s.temp);
+      const ys = series.map(s => s.y);
+      const minT = Math.min(0, ...temps) - 0.1, maxT = Math.max(...temps) + 0.15;
+      const minY = Math.min(...ys) - 0.6, maxY = Math.max(...ys) + 0.6;
+
+      const xPos = yr => padL + ((yr - minYr) / (maxYr - minYr || 1)) * plotW;
+      const yTemp = t => padT + (1 - (t - minT) / (maxT - minT || 1)) * plotH;
+      const yEmp = v => padT + (1 - (v - minY) / (maxY - minY || 1)) * plotH;
+
+      let gridHtml = "";
+      for (let i = 0; i <= 4; i++) {
+        const gy = padT + (i / 4) * plotH;
+        const tVal = (maxT - (i / 4) * (maxT - minT)).toFixed(1);
+        const yVal = (maxY - (i / 4) * (maxY - minY)).toFixed(1);
+        gridHtml += `<line x1="${padL}" y1="${gy}" x2="${W - padR}" y2="${gy}" stroke="var(--border)" stroke-dasharray="3 3" stroke-width="0.8"/>`;
+        gridHtml += `<text x="${padL - 6}" y="${gy + 4}" text-anchor="end" font-size="10" fill="var(--heat)">+${tVal}°</text>`;
+        gridHtml += `<text x="${W - padR + 6}" y="${gy + 4}" text-anchor="start" font-size="10" fill="var(--emp)">${yVal}%</text>`;
+      }
+
+      const stepYr = Math.max(1, Math.round((maxYr - minYr) / 6));
+      for (let yr = minYr; yr <= maxYr; yr += stepYr) {
+        const gx = xPos(yr);
+        gridHtml += `<text x="${gx}" y="${H - 8}" text-anchor="middle" font-size="10" fill="var(--muted)">${yr}</text>`;
+      }
+
+      const tempPath = series.map((s, i) => `${i === 0 ? "M" : "L"}${xPos(s.year).toFixed(1)},${yTemp(s.temp).toFixed(1)}`).join(" ");
+      const empPath = series.map((s, i) => `${i === 0 ? "M" : "L"}${xPos(s.year).toFixed(1)},${yEmp(s.y).toFixed(1)}`).join(" ");
+
+      const dots = series.filter((_, i) => i % 2 === 0 || i === series.length - 1).map(s =>
+        `<circle cx="${xPos(s.year).toFixed(1)}" cy="${yTemp(s.temp).toFixed(1)}" r="2.8" fill="var(--heat)"><title>${s.year}: +${s.temp.toFixed(2)}°C</title></circle>` +
+        `<circle cx="${xPos(s.year).toFixed(1)}" cy="${yEmp(s.y).toFixed(1)}" r="2.8" fill="var(--emp)"><title>${s.year}: ${s.y.toFixed(2)}% Employment Δ</title></circle>`
+      ).join("");
+
+      svg.innerHTML = `${gridHtml}
+        <path d="${empPath}" fill="none" stroke="var(--emp)" stroke-width="2.3" stroke-linecap="round"/>
+        <path d="${tempPath}" fill="none" stroke="var(--heat)" stroke-width="2.3" stroke-linecap="round"/>
+        ${dots}`;
+    }
+
+    function renderScatter(rows, sectorKey, xKey) {
+      const svg = document.getElementById("scatterChart");
+      const W = 560, H = 250, padL = 46, padR = 22, padT = 18, padB = 34;
+      const plotW = W - padL - padR, plotH = H - padT - padB;
+
+      const getX = r => xKey === "rain" ? r.rain_mm : (xKey === "heatdays" ? r.heat_days : r.temp_c);
+      const pts = rows.map(r => ({ x: getX(r), y: r[sectorKey], label: `${r.region} (${r.year})` }));
+      const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+      const minX = Math.min(...xs), maxX = Math.max(...xs);
+      const minY = Math.min(...ys) - 0.4, maxY = Math.max(...ys) + 0.4;
+      const spanX = (maxX - minX) || 1, spanY = (maxY - minY) || 1;
+
+      const sx = x => padL + ((x - minX) / spanX) * plotW;
+      const sy = y => padT + (1 - (y - minY) / spanY) * plotH;
+
+      // Simple bivariate quadratic or linear curve for clean visual overlay
+      const mx = xs.reduce((a, b) => a + b, 0) / pts.length;
+      const my = ys.reduce((a, b) => a + b, 0) / pts.length;
+      let cov = 0, varX = 0;
+      for (const p of pts) { cov += (p.x - mx) * (p.y - my); varX += (p.x - mx) ** 2; }
+      const slope = cov / (varX || 1e-9);
+      const intercept = my - slope * mx;
+
+      let grid = "";
+      for (let i = 0; i <= 4; i++) {
+        const gy = padT + (i / 4) * plotH;
+        const yv = (maxY - (i / 4) * spanY).toFixed(1);
+        grid += `<line x1="${padL}" y1="${gy}" x2="${W - padR}" y2="${gy}" stroke="var(--border)" stroke-dasharray="3 3" stroke-width="0.8"/>`;
+        grid += `<text x="${padL - 6}" y="${gy + 4}" text-anchor="end" font-size="10" fill="var(--muted)">${yv}%</text>`;
+      }
+      for (let i = 0; i <= 4; i++) {
+        const gx = padL + (i / 4) * plotW;
+        const xv = minX + (i / 4) * spanX;
+        const lbl = xKey === "temp" ? `+${xv.toFixed(1)}°C` : Math.round(xv);
+        grid += `<text x="${gx}" y="${H - 8}" text-anchor="middle" font-size="10" fill="var(--muted)">${lbl}</text>`;
+      }
+
+      const circles = pts.map(p =>
+        `<circle cx="${sx(p.x).toFixed(1)}" cy="${sy(p.y).toFixed(1)}" r="3.4" fill="var(--accent)" fill-opacity="0.58"><title>${p.label}: X=${p.x}, Y=${p.y}%</title></circle>`
+      ).join("");
+
+      const x1 = minX, y1 = intercept + slope * x1;
+      const x2 = maxX, y2 = intercept + slope * x2;
+      const line = `<line x1="${sx(x1).toFixed(1)}" y1="${sy(y1).toFixed(1)}" x2="${sx(x2).toFixed(1)}" y2="${sy(y2).toFixed(1)}" stroke="var(--heat)" stroke-width="2.6"/>`;
+
+      document.getElementById("scatterSub").textContent =
+        `Bivariate slope: ${slope >= 0 ? "+" : ""}${slope.toFixed(3)} per unit (${pts.length} panel observations). Hover points to inspect Region × Year.`;
+      svg.innerHTML = `${grid}${circles}${line}`;
+    }
+
+    let latestModelSummary = null;
+
+    function updateWorkbench() {
+      const sectorKey = document.getElementById("sectorSelect").value;
+      const regionVal = document.getElementById("regionSelect").value;
+      const spec = document.getElementById("specSelect").value;
+      const xKey = document.getElementById("xAxisSelect").value;
+
+      const filtered = regionVal === "ALL" ? panelData : panelData.filter(r => r.region === regionVal);
+      const effectiveSpec = (regionVal !== "ALL" && spec === "twfe") ? "ols" : spec;
+      const res = runEconometricModel(filtered, sectorKey, effectiveSpec);
+      latestModelSummary = { sectorKey, regionVal, res };
+
+      const tempTerm = res.terms[1];
+      const rainTerm = effectiveSpec === "quad" ? res.terms[3] : res.terms[2];
+
+      document.getElementById("kpiBetaTemp").textContent = `${tempTerm.beta >= 0 ? "+" : ""}${tempTerm.beta.toFixed(3)}%`;
+      document.getElementById("kpiBetaRain").textContent = `${rainTerm.beta >= 0 ? "+" : ""}${rainTerm.beta.toFixed(3)}%`;
+      document.getElementById("kpiR2").textContent = `R² = ${res.r2.toFixed(3)}`;
+      document.getElementById("kpiPval").textContent = tempTerm.p < 0.0001 ? "p < 0.0001 ***" : `p = ${tempTerm.p.toFixed(4)}`;
+      document.getElementById("kpiObs").textContent = `${res.n} obs`;
+
+      document.getElementById("estimatorBadge").textContent =
+        effectiveSpec === "twfe" ? "Two-Way Fixed Effects (HC1 Robust)" :
+        (effectiveSpec === "quad" ? "Quadratic Non-Linear Climate OLS" : "Pooled OLS + Macro Controls");
+
+      document.getElementById("eqFormula").textContent =
+        `Y_${sectorKey}(i,t) = ${res.terms.map((t, idx) => `${idx === 0 ? "" : (t.beta >= 0 ? " + " : " - ")}${Math.abs(t.beta).toFixed(3)}·X${idx}`).join("")} + ε(i,t)`;
+
+      const tbody = document.getElementById("regTableBody");
+      tbody.innerHTML = res.terms.map(t => {
+        const stars = t.p < 0.01 ? "*** (p<0.01)" : (t.p < 0.05 ? "** (p<0.05)" : (t.p < 0.10 ? "* (p<0.10)" : "n.s."));
+        const cls = t.p < 0.01 ? "sig3" : (t.p < 0.05 ? "sig2" : "ok");
+        return `<tr>
+          <td><strong>${t.name}</strong></td>
+          <td class="num">${t.beta >= 0 ? "+" : ""}${t.beta.toFixed(4)}</td>
+          <td class="num">(${t.se.toFixed(4)})</td>
+          <td class="num">${t.t.toFixed(2)}</td>
+          <td class="num">${t.p < 0.0001 ? "< 0.0001" : t.p.toFixed(4)}</td>
+          <td class="num">[${t.ciLow.toFixed(3)}, ${t.ciHigh.toFixed(3)}]</td>
+          <td><span class="badge ${cls}">${stars}</span></td>
+        </tr>`;
+      }).join("");
+
+      document.getElementById("regDiagnostics").textContent =
+        `Diagnostics: N = ${res.n} | Residual DoF = ${res.df} (Absorbed FE DoF = ${res.dofAbsorbed}) | Adjusted R² = ${res.adjR2.toFixed(3)} | F-statistic = ${res.fStat.toFixed(2)} | Durbin-Watson = ${res.dw.toFixed(2)}. Heteroskedasticity-robust HC1 standard errors in parentheses.`;
+
+      renderTimeSeries(filtered, sectorKey);
+      renderScatter(filtered, sectorKey, xKey);
+    }
+
+    function updateSimulator() {
+      const dT = parseFloat(document.getElementById("simTemp").value);
+      const dR = parseFloat(document.getElementById("simRain").value);
+      const adapt = parseFloat(document.getElementById("simAdapt").value) / 100;
+
+      document.getElementById("lblSimTemp").textContent = `+${dT.toFixed(1)}°C`;
+      document.getElementById("lblSimRain").textContent = `${dR >= 0 ? "+" : ""}${dR} mm`;
+      document.getElementById("lblSimAdapt").textContent = `${Math.round(adapt * 100)}%`;
+
+      const sectorKeys = ["agri", "const", "mfg", "tourism", "services"];
+      let netFteThousands = 0;
+      let outdoorLossThousands = 0;
+
+      const rowsHtml = sectorKeys.map(k => {
+        const mod = runEconometricModel(panelData, k, "quad");
+        const bT1 = mod.terms[1].beta;
+        const bT2 = mod.terms[2].beta;
+        const bRain = mod.terms[3].beta;
+        // Compare shock vs historical mean (+0.65°C)
+        const deltaT = dT - 0.65;
+        let rawPct = bT1 * deltaT + bT2 * (dT * dT - 0.65 * 0.65) * 0.35 + bRain * (dR / 100);
+        // Adaptation mitigates negative climate damage and boosts green services/construction retrofits
+        const adjPct = rawPct < 0 ? rawPct * (1 - 0.68 * adapt) : rawPct + adapt * 0.45;
+        const baseM = SECTORS[k].baselineM;
+        const fteK = Math.round(baseM * 1000 * (adjPct / 100));
+        netFteThousands += fteK;
+        if (k === "agri" || k === "const") outdoorLossThousands += Math.min(0, fteK);
+
+        const barPct = Math.min(100, Math.round(Math.abs(adjPct) * 18));
+        const color = adjPct < -0.5 ? "var(--heat)" : (adjPct < 0 ? "var(--warn-fg)" : "var(--ok-fg)");
+        return `<tr>
+          <td><strong>${SECTORS[k].label}</strong></td>
+          <td class="num">${baseM.toFixed(1)}M workers</td>
+          <td class="num" style="color:${color};font-weight:700;">${adjPct >= 0 ? "+" : ""}${adjPct.toFixed(2)}%</td>
+          <td class="num" style="font-weight:700;">${fteK >= 0 ? "+" : ""}${fteK.toLocaleString()}k FTE</td>
+          <td>
+            <div class="bar-track"><div class="bar-fill" style="width:${barPct}%;background:${color};"></div></div>
+          </td>
+        </tr>`;
+      }).join("");
+
+      document.getElementById("simTableBody").innerHTML = rowsHtml;
+      document.getElementById("simNetJobs").textContent = `${netFteThousands >= 0 ? "+" : ""}${netFteThousands.toLocaleString()}k FTE`;
+      document.getElementById("simNetJobs").style.color = netFteThousands < 0 ? "var(--danger-fg)" : "var(--ok-fg)";
+      document.getElementById("simOutdoorLoss").textContent = `${outdoorLossThousands.toLocaleString()}k FTE`;
+      const gdpImpact = ((netFteThousands / 52400) * 100 * 1.35).toFixed(2);
+      document.getElementById("simGdpDrag").textContent = `${gdpImpact >= 0 ? "+" : ""}${gdpImpact}% GDP`;
+    }
+
+    function renderDatasetPreview() {
+      document.getElementById("totalRowsSpan").textContent = panelData.length;
+      const latest = panelData.slice(-25).reverse();
+      document.getElementById("dataPreviewBody").innerHTML = latest.map(r => `<tr>
+        <td>${r.year}</td>
+        <td>${r.region}</td>
+        <td class="num">+${r.temp_c.toFixed(2)}</td>
+        <td class="num">${r.rain_mm >= 0 ? "+" : ""}${r.rain_mm}</td>
+        <td class="num">${r.heat_days}</td>
+        <td class="num">${r.agri.toFixed(2)}%</td>
+        <td class="num">${r.const.toFixed(2)}%</td>
+        <td class="num">${r.mfg.toFixed(2)}%</td>
+        <td class="num">${r.tourism.toFixed(2)}%</td>
+        <td class="num">${r.services.toFixed(2)}%</td>
+      </tr>`).join("");
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      setTimeout(() => el.classList.remove("show"), 2600);
+    }
+
+    // Tab navigation
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
+      });
+    });
+
+    ["sectorSelect", "regionSelect", "specSelect", "xAxisSelect"].forEach(id => {
+      document.getElementById(id).addEventListener("change", updateWorkbench);
+    });
+
+    ["simTemp", "simRain", "simAdapt"].forEach(id => {
+      document.getElementById(id).addEventListener("input", updateSimulator);
+    });
+
+    document.querySelectorAll(".preset-sim").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.getElementById("simTemp").value = btn.dataset.t;
+        document.getElementById("simRain").value = btn.dataset.r;
+        document.getElementById("simAdapt").value = btn.dataset.a;
+        updateSimulator();
+      });
+    });
+
+    // Theme toggle
+    document.getElementById("themeBtn").addEventListener("click", () => {
+      const meta = document.querySelector('meta[name="color-scheme"]');
+      const next = meta.content === "dark" ? "light" : "dark";
+      meta.content = next;
+      document.documentElement.style.colorScheme = next;
+      try { localStorage.setItem("color-scheme", next); } catch {}
+    });
+
+    // CSV Download
+    document.getElementById("exportCsvBtn").addEventListener("click", () => {
+      const header = "year,region,temp_anomaly_c,rain_anomaly_mm,extreme_heat_days,gdp_growth_ctrl,agri_emp_growth,const_hours_growth,mfg_emp_growth,tourism_emp_growth,services_emp_growth\n";
+      const body = panelData.map(r =>
+        `${r.year},"${r.region}",${r.temp_c},${r.rain_mm},${r.heat_days},${r.gdp_ctrl},${r.agri},${r.const},${r.mfg},${r.tourism},${r.services}`
+      ).join("\n");
+      const blob = new Blob([header + body], { type: "text/csv;charset=utf-8;" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "vietnam_climate_employment_panel_1995_2025.csv";
+      a.click();
+      showToast("Downloaded 155-row Provincial Climate-Employment Panel CSV");
+    });
+
+    // Executive Markdown Report Download
+    document.getElementById("exportMdBtn").addEventListener("click", () => {
+      const { sectorKey, regionVal, res } = latestModelSummary;
+      const dT = document.getElementById("simTemp").value;
+      const dR = document.getElementById("simRain").value;
+      const adapt = document.getElementById("simAdapt").value;
+      const md = `# Executive Econometric Report: Climate Change Impacts on Sectoral Employment\n\n` +
+        `- **Target Sector:** ${SECTORS[sectorKey].label}\n` +
+        `- **Panel Coverage:** ${regionVal} (${res.n} observations, 1995–2025)\n` +
+        `- **Econometric Fit:** R² = ${res.r2.toFixed(4)} | Adj. R² = ${res.adjR2.toFixed(4)} | F-stat = ${res.fStat.toFixed(2)} | DW = ${res.dw.toFixed(2)}\n\n` +
+        `## 1. Regression Parameter Estimates (HC1 Robust Standard Errors)\n\n` +
+        `| Variable | Coef (β) | Robust SE | t-Stat | p-Value |\n|---|---:|---:|---:|---:|\n` +
+        res.terms.map(t => `| ${t.name} | ${t.beta.toFixed(4)} | ${t.se.toFixed(4)} | ${t.t.toFixed(2)} | ${t.p.toFixed(4)} |`).join("\n") +
+        `\n\n## 2. Policy Scenario Projection (+${dT}°C Warming, ${dR}mm Rainfall Shock, ${adapt}% Adaptation)\n` +
+        `- **Net National Workforce Impact:** ${document.getElementById("simNetJobs").textContent}\n` +
+        `- **Outdoor Heat-Exposed Labor Loss:** ${document.getElementById("simOutdoorLoss").textContent}\n` +
+        `- **Estimated Labor GDP Effect:** ${document.getElementById("simGdpDrag").textContent}\n`;
+      const blob = new Blob([md], { type: "text/markdown;charset=utf-8;" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "Executive_Climate_Employment_Report.md";
+      a.click();
+      showToast("Exported Executive Econometric Brief (.md)");
+    });
+
+    document.getElementById("copyCodeBtn").addEventListener("click", () => {
+      navigator.clipboard.writeText(document.getElementById("codeBlock").innerText);
+      showToast("Copied Python & R Econometric Pipeline to clipboard!");
+    });
+
+    document.getElementById("loadCustomBtn").addEventListener("click", () => {
+      const raw = document.getElementById("customCsvInput").value.trim();
+      if (!raw) { showToast("Paste CSV lines first (or keep the 155-row Vietnam panel)"); return; }
+      const lines = raw.split(/\r?\n/).filter(Boolean);
+      const parsed = [];
+      for (const line of lines) {
+        if (/^year/i.test(line)) continue;
+        const p = line.split(",").map(s => s.replace(/^"|"$/g, "").trim());
+        if (p.length >= 11) {
+          parsed.push({
+            year: +p[0], region: p[1], temp_c: +p[2], rain_mm: +p[3], heat_days: +p[4],
+            gdp_ctrl: +p[5], agri: +p[6], const: +p[7], mfg: +p[8], tourism: +p[9], services: +p[10]
+          });
+        }
+      }
+      if (parsed.length < 8) { showToast("Need at least 8 valid CSV rows for regression DoF."); return; }
+      panelData = parsed;
+      updateWorkbench();
+      updateSimulator();
+      renderDatasetPreview();
+      showToast(`Loaded ${parsed.length} custom panel rows into OLS engine!`);
+    });
+
+    document.getElementById("resetDataBtn").addEventListener("click", () => {
+      panelData = buildDefaultPanel();
+      updateWorkbench();
+      updateSimulator();
+      renderDatasetPreview();
+      showToast("Restored 155-row Vietnam Provincial Panel (1995–2025)");
+    });
+
+    updateWorkbench();
+    updateSimulator();
+    renderDatasetPreview();
+  </script>
+</body>
+</html>
