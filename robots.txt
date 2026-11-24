@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://tranhoangtu-it.github.io/sitemap.xml

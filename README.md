@@ -1,10 +1,7 @@
-# tranhoangtu-it.github.io
+# tranhoangtu-it.github.io — Open-Core Engineering & Edge SaaS Hub
 
-Personal portfolio website for Trần Hoàng Tú.
+Static SEO & product showcase hub for **Tran Hoang Tu** ([tuth.site](https://tuth.site) · [@tranhoangtu-it](https://github.com/tranhoangtu-it)).
 
-**Live:** [tranhoangtu-it.github.io](https://tranhoangtu-it.github.io)
-
-## Tech Stack
-
-- HTML / CSS / JavaScript
-- GitHub Pages
+- **Live Hub:** [https://tranhoangtu-it.github.io](https://tranhoangtu-it.github.io)
+- **Portfolio:** [https://tuth.site](https://tuth.site)
+- **Commercial Pro Bundles:** [Gumroad](https://tranhoangtu.gumroad.com) · [Payhip](https://payhip.com/WittyCraftCo)
