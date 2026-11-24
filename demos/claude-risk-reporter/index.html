@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    try {
+      document.querySelector('meta[name="color-scheme"]').content = localStorage.getItem("color-scheme") ?? "light dark";
+    } catch {}
+  </script>
+  <title>Claude 项目风险报告与周报跟踪工具 | Bilingual AI Project Risk Reporter</title>
+  <meta name="description" content="基于 Claude 的轻量级项目风险报告生成与变更跟踪工具：风险清单、影响程度、处理建议、CSV批量导入、中英文周报一键复制与导出。">
+  <style>
+    :root {
+      --bg-light: #f8fafc;
+      --bg-dark: #0b1120;
+      --surface-light: #ffffff;
+      --surface-dark: #111827;
+      --surface-2-light: #f1f5f9;
+      --surface-2-dark: #1e293b;
+      --text-light: #0f172a;
+      --text-dark: #f8fafc;
+      --muted-light: #475569;
+      --muted-dark: #94a3b8;
+      --border-light: #cbd5e1;
+      --border-dark: #334155;
+      --accent-light: #2563eb;
+      --accent-dark: #60a5fa;
+      --accent-fg-light: #ffffff;
+      --accent-fg-dark: #081c3a;
+      --high-bg-light: #fef2f2;
+      --high-bg-dark: #3b1219;
+      --high-fg-light: #b91c1c;
+      --high-fg-dark: #fca5a5;
+      --ok-light: #059669;
+      --ok-dark: #34d399;
+
+      --bg: var(--bg-light);
+      --surface: var(--surface-light);
+      --surface-2: var(--surface-2-light);
+      --text: var(--text-light);
+      --muted: var(--muted-light);
+      --border: var(--border-light);
+      --accent: var(--accent-light);
+      --accent-fg: var(--accent-fg-light);
+      --high-bg: var(--high-bg-light);
+      --high-fg: var(--high-fg-light);
+      --ok: var(--ok-light);
+
+      @media (prefers-color-scheme: dark) {
+        --bg: var(--bg-dark);
+        --surface: var(--surface-dark);
+        --surface-2: var(--surface-2-dark);
+        --text: var(--text-dark);
+        --muted: var(--muted-dark);
+        --border: var(--border-dark);
+        --accent: var(--accent-dark);
+        --accent-fg: var(--accent-fg-dark);
+        --high-bg: var(--high-bg-dark);
+        --high-fg: var(--high-fg-dark);
+        --ok: var(--ok-dark);
+      }
+
+      @supports (color: light-dark(white, black)) {
+        --bg: light-dark(var(--bg-light), var(--bg-dark));
+        --surface: light-dark(var(--surface-light), var(--surface-dark));
+        --surface-2: light-dark(var(--surface-2-light), var(--surface-2-dark));
+        --text: light-dark(var(--text-light), var(--text-dark));
+        --muted: light-dark(var(--muted-light), var(--muted-dark));
+        --border: light-dark(var(--border-light), var(--border-dark));
+        --accent: light-dark(var(--accent-light), var(--accent-dark));
+        --accent-fg: light-dark(var(--accent-fg-light), var(--accent-fg-dark));
+        --high-bg: light-dark(var(--high-bg-light), var(--high-bg-dark));
+        --high-fg: light-dark(var(--high-fg-light), var(--high-fg-dark));
+        --ok: light-dark(var(--ok-light), var(--ok-dark));
+      }
+
+      color-scheme: light dark;
+      accent-color: var(--accent);
+
+      &:has(> head > meta[name="color-scheme"][content="dark"]) { color-scheme: dark; }
+      &:has(> head > meta[name="color-scheme"][content="light"]) { color-scheme: light; }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    .container { max-inline-size: 1220px; margin-inline: auto; padding: 1.25rem; }
+    header.topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-block-end: 1rem;
+      border-block-end: 1px solid var(--border);
+      margin-block-end: 1.25rem;
+    }
+    .brand h1 { margin: 0; font-size: clamp(1.2rem, 2.4vw, 1.55rem); }
+    .brand p { margin: 0.2rem 0 0; font-size: 0.88rem; color: var(--muted); }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.55rem; align-items: center; }
+
+    button {
+      font: inherit;
+      font-weight: 600;
+      min-block-size: 44px;
+      min-inline-size: 44px;
+      padding: 0.5rem 0.95rem;
+      border-radius: 0.6rem;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+    }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .btn-primary { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 1.25rem;
+      margin-block-end: 1.25rem;
+    }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.95rem;
+      padding: 1.2rem;
+    }
+    .panel h2 { margin: 0 0 0.85rem; font-size: 1.1rem; }
+
+    .field { display: flex; flex-direction: column; gap: 0.25rem; margin-block-end: 0.95rem; }
+    .field label { font-weight: 600; font-size: 0.9rem; }
+    .hint { font-size: 0.8rem; color: var(--muted); }
+    .field :is(input, select, textarea) {
+      font: inherit;
+      font-size: max(1rem, 1em);
+      min-block-size: 46px;
+      padding: 0.55rem 0.8rem;
+      border-radius: 0.55rem;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      inline-size: 100%;
+    }
+    .error-msg { display: none; color: var(--high-fg); font-size: 0.84rem; font-weight: 600; }
+    :is(:user-invalid, .user-invalid-fallback) { border-color: var(--high-fg) !important; background: var(--high-bg) !important; }
+    :is(:user-invalid, .user-invalid-fallback) + .error-msg { display: block; }
+
+    /* Accessible Copy Button + Sibling Live Bubble */
+    .copy { position: relative; display: inline-flex; align-items: center; gap: 0.45rem; }
+    .copy-button[data-copied] { border-color: var(--ok); color: var(--ok); }
+    .copy .tip {
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 0.25rem 0.55rem;
+      border-radius: 0.4rem;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      opacity: 0;
+      transition: opacity 0.18s ease;
+      pointer-events: none;
+    }
+    .copy-button:is([data-copied], [data-failed]) + .tip { opacity: 1; }
+
+    /* Sortable + Responsive Risk Table */
+    .table-wrapper {
+      overflow: auto;
+      max-inline-size: 100%;
+      max-block-size: min(460px, 75vh);
+      container-type: inline-size;
+      border: 1px solid var(--border);
+      border-radius: 0.85rem;
+      background: var(--surface);
+      margin-block-end: 1.25rem;
+    }
+    table { inline-size: 100%; min-inline-size: 680px; border-collapse: separate; border-spacing: 0; }
+    caption { text-align: start; padding: 0.9rem 1rem; font-weight: 700; border-block-end: 1px solid var(--border); }
+    thead { position: sticky; inset-block-start: 0; z-index: 2; background: var(--surface-2); }
+    th, td { padding: 0.7rem 0.9rem; text-align: start; border-block-end: 1px solid var(--border); font-size: 0.9rem; vertical-align: top; }
+    th:has(> button) { padding: 0; }
+    th > button {
+      inline-size: 100%;
+      min-block-size: 44px;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      text-align: start;
+      padding: 0.7rem 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    th[aria-sort="ascending"] > button .sort-ind::after { content: "▲"; }
+    th[aria-sort="descending"] > button .sort-ind::after { content: "▼"; }
+    tbody th { position: sticky; inset-inline-start: 0; background: var(--surface); z-index: 1; }
+    tr.high-impact td, tr.high-impact th { background: var(--high-bg); }
+    .pill { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; font-size: 0.78rem; font-weight: 700; border: 1px solid var(--border); }
+    .pill-high { color: var(--high-fg); border-color: var(--high-fg); }
+
+    @container (width < 640px) {
+      table { min-inline-size: 0; }
+      table, thead, tbody, tr, th, td { display: block; }
+      thead { display: none; }
+      tr { margin: 0.75rem; border: 1px solid var(--border); border-radius: 0.7rem; overflow: hidden; }
+      tbody th { position: static; background: var(--surface-2); }
+      table {
+        --label-2: "分类 / Category";
+        --label-3: "影响 / Impact";
+        --label-4: "状态 / Status";
+        --label-5: "处理建议 / Mitigation";
+      }
+      td:nth-child(2)::before { content: var(--label-2) ": "; font-weight: 600; }
+      td:nth-child(3)::before { content: var(--label-3) ": "; font-weight: 600; }
+      td:nth-child(4)::before { content: var(--label-4) ": "; font-weight: 600; }
+      td:nth-child(5)::before { content: var(--label-5) ": "; font-weight: 600; }
+    }
+
+    pre#weekly-md {
+      margin: 0;
+      padding: 1rem;
+      border-radius: 0.7rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      overflow-x: auto;
+      font-size: 0.86rem;
+      white-space: pre-wrap;
+    }
+    .visually-hidden:where(:not(:focus-within, :active)) {
+      position: absolute !important;
+      clip-path: inset(50%) !important;
+      overflow: hidden !important;
+      width: 1px !important;
+      height: 1px !important;
+      margin: -1px !important;
+      padding: 0 !important;
+      border: 0 !important;
+      white-space: nowrap !important;
+    }
+    @media print {
+      header .actions, #entry-panel, #csv-panel { display: none !important; }
+      .table-wrapper { max-block-size: none; overflow: visible; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="topbar">
+      <div class="brand">
+        <h1>🛡️ Claude 项目风险报告与周报跟踪器 · Bilingual Risk Tracker</h1>
+        <p>风险清单汇总 · 重复风险历史识别 · Claude 语义归类与建议 · 周报/PPT中英文对照表一键复制</p>
+      </div>
+      <div class="actions">
+        <button type="button" id="download-md-btn">⬇ 导出 Markdown</button>
+        <button type="button" id="download-json-btn">⬇ 导出 JSON 存档</button>
+        <button type="button" id="print-pdf-btn">🖨️ 导出 PDF</button>
+        <button type="button" id="theme-btn" aria-label="切换深色或浅色主题">🌓 主题 / Theme</button>
+      </div>
+    </header>
+
+    <div class="grid-2">
+      <section class="panel" id="entry-panel" aria-labelledby="form-heading">
+        <h2 id="form-heading">1. 录入或更新风险 / Add or Update Risk</h2>
+        <form id="risk-form" action="#save-risk" method="POST" aria-labelledby="form-heading">
+          <div class="field">
+            <label for="riskTitle">风险标题 / Risk Title <span aria-hidden="true">*</span></label>
+            <span id="title-hint" class="hint">输入已有同名风险将自动关联历史记录并记录状态变更日志</span>
+            <input type="text" id="riskTitle" name="riskTitle" required minlength="3" maxlength="120" aria-describedby="title-hint" data-error="err-title" placeholder="例如：第三方支付网关偶发超时 / Payment API latency spike">
+            <div id="err-title" class="error-msg"><span role="img" aria-label="Error">❌</span> 请输入至少 3 个字符的风险名称 (Enter at least 3 chars).</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;">
+            <div class="field">
+              <label for="impact">影响程度 / Impact</label>
+              <select id="impact" name="impact">
+                <option value="3" selected>🔴 高 (High - P0)</option>
+                <option value="2">🟠 中 (Medium - P1)</option>
+                <option value="1">🟢 低 (Low - P2)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="status">当前状态 / Status</label>
+              <select id="status" name="status">
+                <option value="开放 / Open" selected>开放 / Open</option>
+                <option value="处理中 / Mitigating">处理中 / Mitigating</option>
+                <option value="已关闭 / Closed">已关闭 / Closed</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="desc">问题详情描述 / Description <span aria-hidden="true">*</span></label>
+            <textarea id="desc" name="desc" rows="2" required minlength="5" data-error="err-desc" placeholder="描述触发场景、受影响模块或排期阻塞点..."></textarea>
+            <div id="err-desc" class="error-msg"><span role="img" aria-label="Error">❌</span> 请填写风险详细描述 (Please describe the risk).</div>
+          </div>
+
+          <div class="field">
+            <label for="claudeKey">Claude API Key（可选，留空则使用内置智能引擎生成双语建议）</label>
+            <div style="display:flex;gap:0.45rem;">
+              <input type="password" id="claudeKey" name="claudeKey" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="sk-ant-api03-...">
+              <button type="button" id="toggle-key" aria-pressed="false" aria-label="显示或隐藏 Claude API Key">👁</button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" id="save-btn" style="inline-size:100%;">✨ Claude 智能归类并写入风险台账</button>
+        </form>
+      </section>
+
+      <section class="panel" id="csv-panel" aria-labelledby="csv-heading">
+        <h2 id="csv-heading">2. 批量导入 CSV &amp; 历史变更日志 / Batch CSV &amp; Audit Trail</h2>
+        <div class="field">
+          <label for="csvInput">粘贴 CSV 行（格式：<code>标题,影响(High/Medium/Low),状态(Open/Mitigating/Closed),描述</code>）</label>
+          <textarea id="csvInput" rows="4">核心数据库迁移窗口不足,High,Open,周末停机窗口仅2小时，回滚演练尚未完成
+移动端推送证书即将到期,Medium,Mitigating,iOS APNs 生产证书将在14天后过期，需运维更新</textarea>
+        </div>
+        <button type="button" id="import-csv-btn" style="margin-block-end:1rem;">📥 批量导入并自动去重合并 (Batch Import CSV)</button>
+
+        <h3 style="margin:0.2rem 0 0.5rem;font-size:0.96rem;">📜 完整变更审计日志 / Change History Log</h3>
+        <ul id="audit-log" style="margin:0;padding-inline-start:1.2rem;font-size:0.84rem;color:var(--muted);max-block-size:165px;overflow-y:auto;"></ul>
+      </section>
+    </div>
+
+    <div id="sort-status" role="status" class="visually-hidden"></div>
+    <div tabindex="0" role="region" aria-labelledby="risk-caption" class="table-wrapper">
+      <table id="risk-table">
+        <caption id="risk-caption">📊 项目风险跟踪总表（点击列标题排序 · 红色高亮高影响项 / High-Impact Highlighted）</caption>
+        <thead>
+          <tr>
+            <th scope="col" data-type="text"><button type="button" commandfor="risk-table" command="--sort">风险项 / Risk Item <span class="sort-ind" aria-hidden="true"></span></button></th>
+            <th scope="col" data-type="text"><button type="button" commandfor="risk-table" command="--sort">语义分类 / Category <span class="sort-ind" aria-hidden="true"></span></button></th>
+            <th scope="col" data-type="number" aria-sort="descending"><button type="button" commandfor="risk-table" command="--sort">影响程度 / Impact <span class="sort-ind" aria-hidden="true"></span></button></th>
+            <th scope="col" data-type="text"><button type="button" commandfor="risk-table" command="--sort">状态 / Status <span class="sort-ind" aria-hidden="true"></span></button></th>
+            <th scope="col">处理建议草稿 (中英文对照 / Bilingual Mitigation)</th>
+          </tr>
+        </thead>
+        <tbody id="risk-tbody"></tbody>
+      </table>
+    </div>
+
+    <section class="panel" aria-labelledby="md-heading">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.75rem;margin-block-end:0.8rem;">
+        <h2 id="md-heading" style="margin:0;">📋 可直接粘贴至周报 / PPT 的中英文对照报告 (Weekly Report Markdown)</h2>
+        <span class="copy">
+          <button type="button" class="copy-button btn-primary" command="--copy" commandfor="weekly-md">📋 一键复制周报 Markdown (Copy Report)</button>
+          <span class="tip" role="status"></span>
+        </span>
+      </div>
+      <pre id="weekly-md" tabindex="0"></pre>
+    </section>
+  </div>
+
+  <script>
+    const INITIAL_RISKS = [
+      {
+        id: "RSK-01",
+        title: "跨境支付网关高峰期偶发 504 超时 / Payment Gateway Peak Timeout",
+        category: "技术架构 / Technical",
+        impactScore: 3,
+        impactLabel: "高 / High (P0)",
+        status: "开放 / Open",
+        desc: "晚高峰并发 > 400 QPS 时上游结算接口响应超过 8s，影响订单转化率。",
+        mitigationCn: "启用异步Webhook确认 + 3秒超时自动降级备用通道，并增加熔断告警。",
+        mitigationEn: "Enable async webhook confirmation + 3s circuit-breaker failover to secondary gateway.",
+        revisions: 2,
+        updatedAt: "2026-11-24 14:20"
+      },
+      {
+        id: "RSK-02",
+        title: "Q4 供应商排期延误 5 个工作日 / Vendor API Spec Delay",
+        category: "进度排期 / Schedule",
+        impactScore: 3,
+        impactLabel: "高 / High (P0)",
+        status: "处理中 / Mitigating",
+        desc: "外部物流查询沙箱字段变更尚未冻结，阻塞联调测试。",
+        mitigationCn: "先基于 Mock 契约完成内部验收测试，锁定周五前完成字段映射签署。",
+        mitigationEn: "Decouple QA with contract mocks first and lock schema sign-off before Friday.",
+        revisions: 3,
+        updatedAt: "2026-11-24 15:05"
+      },
+      {
+        id: "RSK-03",
+        title: "导出报表大数据量内存峰值偏高 / Export Memory Spike",
+        category: "性能资源 / Resource",
+        impactScore: 2,
+        impactLabel: "中 / Medium (P1)",
+        status: "处理中 / Mitigating",
+        desc: "单次导出超过 5 万行记录时 Node 进程内存升至 700MB。",
+        mitigationCn: "改为流式分页游标写出 CSV/PDF，限制单批次缓存在 2,000 行以内。",
+        mitigationEn: "Switch to streaming cursor export capped at 2,000 rows per chunk.",
+        revisions: 1,
+        updatedAt: "2026-11-24 15:30"
+      }
+    ];
+
+    let risks = [...INITIAL_RISKS];
+    const auditLogs = [
+      "[2026-11-24 15:30] 初始化加载 3 条演示项目风险记录 (RSK-01 ~ RSK-03)",
+      "[2026-11-24 15:05] 识别重复风险「Q4 供应商排期延误」：状态由「开放」更新为「处理中」(第 3 次跟踪)"
+    ];
+
+    function classifyAndSuggest(title, desc, impactScore) {
+      const text = (title + " " + desc).toLowerCase();
+      if (/数据库|接口|超时|api|timeout|证书|架构|bug|内存/.test(text)) {
+        return {
+          category: "技术架构 / Technical",
+          mitigationCn: impactScore === 3
+            ? "立即建立自动降级与监控告警，安排核心研发在24小时内完成热修复与压测验证。"
+            : "纳入本周技术债迭代，补充自动化回归测试并更新运维巡检清单。",
+          mitigationEn: impactScore === 3
+            ? "Deploy circuit-breaker fallback + alerting immediately; ship verified hotfix within 24h."
+            : "Schedule into current sprint backlog with automated regression test coverage."
+        };
+      }
+      if (/排期|延期|进度|供应商|阻塞|delay|vendor|schedule/.test(text)) {
+        return {
+          category: "进度排期 / Schedule",
+          mitigationCn: "启用并行 Mock 联调解耦关键路径，每日站会同步阻塞点并升级至项目负责人拍板。",
+          mitigationEn: "Unblock critical path via parallel mock integration and escalate daily until resolved."
+        };
+      }
+      return {
+        category: "合规与运营 / Operations",
+        mitigationCn: "明确唯一责任人 (DRI) 与截止时间，制定应急预案并在下次周会复盘闭环。",
+        mitigationEn: "Assign a single DRI + deadline, document contingency SOP, and verify closure in weekly review."
+      };
+    }
+
+    const tbody = document.getElementById("risk-tbody");
+    const mdPre = document.getElementById("weekly-md");
+    const auditUl = document.getElementById("audit-log");
+
+    function renderAll() {
+      tbody.innerHTML = "";
+      const sorted = [...risks].sort((a, b) => b.impactScore - a.impactScore);
+      for (const r of sorted) {
+        const tr = document.createElement("tr");
+        if (r.impactScore === 3 && !r.status.includes("已关闭")) tr.className = "high-impact";
+        tr.innerHTML =
+          `<th scope="row"><strong>${esc(r.title)}</strong><br><small style="color:var(--muted)">${r.id} · 跟踪 ${r.revisions} 次</small></th>` +
+          `<td>${esc(r.category)}</td>` +
+          `<td data-value="${r.impactScore}"><span class="pill ${r.impactScore === 3 ? "pill-high" : ""}">${esc(r.impactLabel)}</span></td>` +
+          `<td>${esc(r.status)}</td>` +
+          `<td><strong>CN:</strong> ${esc(r.mitigationCn)}<br><strong>EN:</strong> ${esc(r.mitigationEn)}</td>`;
+        tbody.appendChild(tr);
+      }
+
+      const openHigh = sorted.filter((r) => r.impactScore === 3 && !r.status.includes("已关闭")).length;
+      const lines = [
+        `# 📅 项目风险周报汇总 / Weekly Project Risk Report (${new Date().toISOString().slice(0, 10)})`,
+        `> 总风险数 Total: **${sorted.length}** | 🔴 高优未关闭 High-Impact Active: **${openHigh}**`,
+        ``,
+        `| ID | 风险事项 / Risk | 分类 / Category | 影响 / Impact | 状态 / Status | 处理建议 / Mitigation Plan (CN / EN) |`,
+        `| :--- | :--- | :--- | :--- | :--- | :--- |`,
+        ...sorted.map((r) =>
+          `| ${r.id} | ${r.title} | ${r.category} | ${r.impactLabel} | ${r.status} | **CN:** ${r.mitigationCn} / **EN:** ${r.mitigationEn} |`
+        )
+      ];
+      mdPre.textContent = lines.join("\n");
+
+      auditUl.innerHTML = auditLogs.map((l) => `<li style="margin-block-end:0.3rem;">${esc(l)}</li>`).join("");
+    }
+
+    function esc(s) {
+      return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function upsertRisk({ title, impactScore, status, desc, customSuggestion }) {
+      const cleanTitle = title.trim();
+      const nowStr = new Date().toISOString().slice(0, 16).replace("T", " ");
+      const impactLabel = impactScore === 3 ? "高 / High (P0)" : impactScore === 2 ? "中 / Medium (P1)" : "低 / Low (P2)";
+      const ai = customSuggestion || classifyAndSuggest(cleanTitle, desc, impactScore);
+
+      const existing = risks.find((x) => x.title.toLowerCase() === cleanTitle.toLowerCase() || x.title.split("/")[0].trim() === cleanTitle);
+      if (existing) {
+        const prevStatus = existing.status;
+        existing.impactScore = impactScore;
+        existing.impactLabel = impactLabel;
+        existing.status = status;
+        existing.desc = desc;
+        existing.category = ai.category;
+        existing.mitigationCn = ai.mitigationCn;
+        existing.mitigationEn = ai.mitigationEn;
+        existing.revisions += 1;
+        existing.updatedAt = nowStr;
+        auditLogs.unshift(`[${nowStr}] 🔁 历史风险更新 (${existing.id})「${cleanTitle}」：状态 ${prevStatus} → ${status} (第 ${existing.revisions} 次记录)`);
+      } else {
+        const id = "RSK-" + String(risks.length + 1).padStart(2, "0");
+        risks.unshift({
+          id,
+          title: cleanTitle,
+          category: ai.category,
+          impactScore,
+          impactLabel,
+          status,
+          desc,
+          mitigationCn: ai.mitigationCn,
+          mitigationEn: ai.mitigationEn,
+          revisions: 1,
+          updatedAt: nowStr
+        });
+        auditLogs.unshift(`[${nowStr}] ➕ 新增风险 (${id})「${cleanTitle}」[${impactLabel}]`);
+      }
+      renderAll();
+    }
+
+    // 1. Dark Mode Toggle + Cross-Tab Sync
+    const metaScheme = document.querySelector('meta[name="color-scheme"]');
+    window.addEventListener("storage", (e) => {
+      if (e.key === "color-scheme") metaScheme.content = e.newValue ?? "light dark";
+    });
+    document.getElementById("theme-btn").addEventListener("click", () => {
+      const sysDark = matchMedia("(prefers-color-scheme: dark)").matches;
+      const stored = localStorage.getItem("color-scheme");
+      const renderedDark = stored ? stored === "dark" : sysDark;
+      const target = renderedDark ? "light" : "dark";
+      const matchesSys = (target === "dark") === sysDark;
+      if (matchesSys) localStorage.removeItem("color-scheme");
+      else localStorage.setItem("color-scheme", target);
+      metaScheme.content = matchesSys ? "light dark" : target;
+    });
+
+    // 2. Accessible API Key Toggle
+    const keyInput = document.getElementById("claudeKey");
+    const toggleKeyBtn = document.getElementById("toggle-key");
+    toggleKeyBtn.addEventListener("click", () => {
+      const shown = keyInput.type === "text";
+      keyInput.type = shown ? "password" : "text";
+      toggleKeyBtn.setAttribute("aria-pressed", String(!shown));
+    });
+
+    // 3. Post-Interaction Validation Sync (:user-invalid)
+    const form = document.getElementById("risk-form");
+    const linkError = (el, shown) => {
+      const errorId = el.dataset?.error;
+      if (!errorId) return;
+      const ids = (el.getAttribute("aria-describedby") || "").split(/\s+/).filter((id) => id && id !== errorId);
+      if (shown) ids.push(errorId);
+      if (ids.length) el.setAttribute("aria-describedby", ids.join(" "));
+      else el.removeAttribute("aria-describedby");
+    };
+    const syncAria = (el) => {
+      if (!el.matches?.("input, select, textarea")) return;
+      const invalid = el.matches(":user-invalid");
+      el.setAttribute("aria-invalid", invalid ? "true" : "false");
+      linkError(el, invalid);
+    };
+    form.querySelectorAll("input, select, textarea").forEach((el) => syncAria(el));
+    form.addEventListener("blur", (e) => syncAria(e.target), true);
+    form.addEventListener("input", (e) => syncAria(e.target));
+    form.addEventListener("invalid", (e) => syncAria(e.target), true);
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!form.checkValidity()) {
+        form.querySelector(":invalid")?.focus();
+        return;
+      }
+      const title = document.getElementById("riskTitle").value;
+      const impactScore = Number(document.getElementById("impact").value);
+      const status = document.getElementById("status").value;
+      const desc = document.getElementById("desc").value;
+      const apiKey = keyInput.value.trim();
+
+      let customSuggestion = null;
+      if (apiKey) {
+        try {
+          const res = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              "x-api-key": apiKey,
+              "anthropic-version": "2023-06-01",
+              "anthropic-dangerous-direct-browser-access": "true"
+            },
+            body: JSON.stringify({
+              model: "claude-3-5-haiku-latest",
+              max_tokens: 300,
+              messages: [{
+                role: "user",
+                content: `Return strict JSON {"category":"...","mitigationCn":"...","mitigationEn":"..."} for project risk: ${title} - ${desc}`
+              }]
+            })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            customSuggestion = JSON.parse(data.content?.[0]?.text || "null");
+          }
+        } catch {}
+      }
+
+      upsertRisk({ title, impactScore, status, desc, customSuggestion });
+      form.reset();
+      form.querySelectorAll("input, select, textarea").forEach((el) => syncAria(el));
+    });
+
+    // 4. Batch CSV Import
+    document.getElementById("import-csv-btn").addEventListener("click", () => {
+      const raw = document.getElementById("csvInput").value.trim();
+      if (!raw) return;
+      for (const line of raw.split(/\r?\n/)) {
+        const parts = line.split(",");
+        if (parts.length < 2) continue;
+        const [t, impRaw = "Medium", stRaw = "Open", ...rest] = parts;
+        const imp = /high|高/i.test(impRaw) ? 3 : /low|低/i.test(impRaw) ? 1 : 2;
+        const st = /closed|关闭/i.test(stRaw) ? "已关闭 / Closed" : /mitigat|处理/i.test(stRaw) ? "处理中 / Mitigating" : "开放 / Open";
+        upsertRisk({ title: t, impactScore: imp, status: st, desc: rest.join(",") || t });
+      }
+    });
+
+    // 5. Sortable Table (Invoker Commands + Fallback + DOM Row Move)
+    const table = document.getElementById("risk-table");
+    const sortStatus = document.getElementById("sort-status");
+    const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+    function sortBy(button) {
+      const th = button.closest("th");
+      const direction = th.getAttribute("aria-sort") === "ascending" ? "descending" : "ascending";
+      for (const h of table.tHead.rows[0].cells) h.removeAttribute("aria-sort");
+      th.setAttribute("aria-sort", direction);
+      const factor = direction === "ascending" ? 1 : -1;
+      const idx = th.cellIndex;
+      const type = th.dataset.type;
+      const val = (row) => row.cells[idx].dataset.value ?? row.cells[idx].textContent.trim();
+      const ordered = [...tbody.rows].sort((a, b) =>
+        factor * (type === "number" ? Number(val(a)) - Number(val(b)) : collator.compare(val(a), val(b)))
+      );
+      for (const row of ordered) {
+        if (tbody.moveBefore) tbody.moveBefore(row, null);
+        else tbody.appendChild(row);
+      }
+      sortStatus.textContent = `Sorted by ${button.textContent.trim()}, ${direction}`;
+    }
+    table.addEventListener("command", (e) => { if (e.command === "--sort") sortBy(e.source); });
+    if (!("commandForElement" in HTMLButtonElement.prototype)) {
+      for (const b of table.tHead.querySelectorAll('button[command="--sort"]')) {
+        b.addEventListener("click", () => sortBy(b));
+      }
+    }
+
+    // 6. Modern Copy Button (Invoker Commands + Fallback + VoiceOver Repeat Fix)
+    const copyTimers = new WeakMap();
+    let lastCopyMsg = "";
+    function reportCopy(button, ok) {
+      const tip = button.nextElementSibling;
+      clearTimeout(copyTimers.get(button));
+      button.removeAttribute("data-copied");
+      button.removeAttribute("data-failed");
+      let message = ok ? "已复制 Copied ✓" : "复制失败 Copy failed";
+      if (message === lastCopyMsg) message += "\u00A0";
+      lastCopyMsg = message;
+      tip.textContent = "";
+      void button.offsetWidth;
+      button.setAttribute(ok ? "data-copied" : "data-failed", "");
+      requestAnimationFrame(() => { tip.textContent = message; });
+      copyTimers.set(button, setTimeout(() => {
+        button.removeAttribute("data-copied");
+        button.removeAttribute("data-failed");
+        tip.textContent = "";
+      }, 2000));
+    }
+    async function handleCopy(button, target) {
+      const text = target.innerText.trim();
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        reportCopy(button, true);
+      } catch {
+        reportCopy(button, false);
+      }
+    }
+    if ("CommandEvent" in window) {
+      document.addEventListener("command", (e) => {
+        if (e.command === "--copy") handleCopy(e.source, e.target);
+      }, true);
+    } else {
+      document.addEventListener("click", (e) => {
+        if (e.defaultPrevented) return;
+        const btn = e.target.closest('button[command="--copy"]');
+        if (!btn) return;
+        const target = document.getElementById(btn.getAttribute("commandfor"));
+        if (target) handleCopy(btn, target);
+      });
+    }
+
+    // 7. Markdown / JSON / PDF Exports
+    function downloadBlob(filename, content, mime) {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([content], { type: mime }));
+      a.download = filename;
+      a.click();
+    }
+    document.getElementById("download-md-btn").addEventListener("click", () => {
+      downloadBlob("weekly-risk-report.md", mdPre.textContent, "text/markdown;charset=utf-8");
+    });
+    document.getElementById("download-json-btn").addEventListener("click", () => {
+      downloadBlob("risk-tracker-archive.json", JSON.stringify({ exportedAt: new Date().toISOString(), risks, auditLogs }, null, 2), "application/json");
+    });
+    document.getElementById("print-pdf-btn").addEventListener("click", () => window.print());
+
+    renderAll();
+  </script>
+</body>
+</html>

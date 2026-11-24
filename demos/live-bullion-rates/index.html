@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    try {
+      document.querySelector('meta[name="color-scheme"]').content = localStorage.getItem("color-scheme") ?? "light dark";
+    } catch {}
+  </script>
+  <title>AurumStream — Live Spot Gold (XAU) &amp; Silver (XAG) Bullion Rates</title>
+  <meta name="description" content="Zero-flicker real-time spot Gold (XAU) and Silver (XAG) bullion prices per troy ounce, gram, 10g, and kilogram across USD, INR, EUR, and GBP.">
+  <style>
+    :root {
+      --bg-light: #f4f6f9;
+      --bg-dark: #0a101d;
+      --surface-light: #ffffff;
+      --surface-dark: #111a2e;
+      --surface-2-light: #e9eef5;
+      --surface-2-dark: #192540;
+      --text-light: #0d1526;
+      --text-dark: #f1f5f9;
+      --muted-light: #475569;
+      --muted-dark: #94a3b8;
+      --border-light: #cbd5e1;
+      --border-dark: #2a3a5c;
+      --gold-light: #b45309;
+      --gold-dark: #fbbf24;
+      --silver-light: #334155;
+      --silver-dark: #cbd5e1;
+      --accent-light: #1d4ed8;
+      --accent-dark: #60a5fa;
+      --accent-fg-light: #ffffff;
+      --accent-fg-dark: #071936;
+      --emerald-light: #047857;
+      --emerald-dark: #34d399;
+
+      --bg: var(--bg-light);
+      --surface: var(--surface-light);
+      --surface-2: var(--surface-2-light);
+      --text: var(--text-light);
+      --muted: var(--muted-light);
+      --border: var(--border-light);
+      --gold: var(--gold-light);
+      --silver: var(--silver-light);
+      --accent: var(--accent-light);
+      --accent-fg: var(--accent-fg-light);
+      --emerald: var(--emerald-light);
+
+      @media (prefers-color-scheme: dark) {
+        --bg: var(--bg-dark);
+        --surface: var(--surface-dark);
+        --surface-2: var(--surface-2-dark);
+        --text: var(--text-dark);
+        --muted: var(--muted-dark);
+        --border: var(--border-dark);
+        --gold: var(--gold-dark);
+        --silver: var(--silver-dark);
+        --accent: var(--accent-dark);
+        --accent-fg: var(--accent-fg-dark);
+        --emerald: var(--emerald-dark);
+      }
+
+      @supports (color: light-dark(white, black)) {
+        --bg: light-dark(var(--bg-light), var(--bg-dark));
+        --surface: light-dark(var(--surface-light), var(--surface-dark));
+        --surface-2: light-dark(var(--surface-2-light), var(--surface-2-dark));
+        --text: light-dark(var(--text-light), var(--text-dark));
+        --muted: light-dark(var(--muted-light), var(--muted-dark));
+        --border: light-dark(var(--border-light), var(--border-dark));
+        --gold: light-dark(var(--gold-light), var(--gold-dark));
+        --silver: light-dark(var(--silver-light), var(--silver-dark));
+        --accent: light-dark(var(--accent-light), var(--accent-dark));
+        --accent-fg: light-dark(var(--accent-fg-light), var(--accent-fg-dark));
+        --emerald: light-dark(var(--emerald-light), var(--emerald-dark));
+      }
+
+      color-scheme: light dark;
+      accent-color: var(--accent);
+
+      &:has(> head > meta[name="color-scheme"][content="dark"]) { color-scheme: dark; }
+      &:has(> head > meta[name="color-scheme"][content="light"]) { color-scheme: light; }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      font-variant-numeric: tabular-nums;
+    }
+    .container { max-inline-size: 1180px; margin-inline: auto; padding: 1.25rem; }
+    header.site-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-block-end: 1rem;
+      border-block-end: 1px solid var(--border);
+      margin-block-end: 1.25rem;
+    }
+    .brand-title { font-weight: 800; font-size: 1.35rem; letter-spacing: -0.02em; }
+    .controls { display: flex; flex-wrap: wrap; gap: 0.55rem; align-items: center; }
+
+    button, select, input {
+      font: inherit;
+      font-size: max(1rem, 1em);
+      min-block-size: 44px;
+      padding: 0.48rem 0.85rem;
+      border-radius: 0.6rem;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+    }
+    button { font-weight: 600; cursor: pointer; }
+    button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .btn-primary { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
+
+    .live-banner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: 0.8rem;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      margin-block-end: 1.25rem;
+      font-size: 0.9rem;
+    }
+    .pulse {
+      display: inline-block;
+      inline-size: 10px;
+      block-size: 10px;
+      border-radius: 999px;
+      background: var(--emerald);
+      margin-inline-end: 0.45rem;
+    }
+
+    .metal-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.25rem;
+      margin-block-end: 1.5rem;
+    }
+    .metal-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1.05rem;
+      padding: 1.35rem;
+    }
+    .metal-head { display: flex; justify-content: space-between; align-items: baseline; margin-block-end: 0.5rem; }
+    .spot-big { font-size: clamp(1.9rem, 3.5vw, 2.5rem); font-weight: 800; line-height: 1.15; margin-block: 0.25rem 0.85rem; }
+    .unit-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.6rem;
+      padding-block-start: 0.85rem;
+      border-block-start: 1px solid var(--border);
+      font-size: 0.88rem;
+    }
+    .unit-strip div strong { display: block; font-size: 1rem; margin-top: 0.15rem; }
+
+    /* Sortable + Responsive Bullion Matrix */
+    .table-wrapper {
+      overflow: auto;
+      max-inline-size: 100%;
+      container-type: inline-size;
+      border: 1px solid var(--border);
+      border-radius: 0.9rem;
+      background: var(--surface);
+      margin-block-end: 1.5rem;
+    }
+    table { inline-size: 100%; min-inline-size: 620px; border-collapse: separate; border-spacing: 0; }
+    caption { text-align: start; padding: 0.95rem 1.1rem; font-weight: 700; border-block-end: 1px solid var(--border); }
+    thead { position: sticky; inset-block-start: 0; z-index: 2; background: var(--surface-2); }
+    th, td { padding: 0.75rem 1rem; text-align: start; border-block-end: 1px solid var(--border); font-size: 0.92rem; }
+    th:has(> button) { padding: 0; }
+    th > button {
+      inline-size: 100%;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      text-align: start;
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    th[aria-sort="ascending"] > button .sort-ind::after { content: "▲"; }
+    th[aria-sort="descending"] > button .sort-ind::after { content: "▼"; }
+    tbody th { position: sticky; inset-inline-start: 0; background: var(--surface); z-index: 1; }
+    @container (width < 600px) {
+      table { min-inline-size: 0; }
+      table, thead, tbody, tr, th, td { display: block; }
+      thead { display: none; }
+      tr { margin: 0.75rem; border: 1px solid var(--border); border-radius: 0.7rem; }
+      tbody th { position: static; background: var(--surface-2); }
+      table {
+        --label-2: "24K Fine Gold (999.9)";
+        --label-3: "22K Standard Gold (916)";
+        --label-4: "Fine Silver (999.0)";
+      }
+      td:nth-child(2)::before { content: var(--label-2) ": "; font-weight: 600; }
+      td:nth-child(3)::before { content: var(--label-3) ": "; font-weight: 600; }
+      td:nth-child(4)::before { content: var(--label-4) ": "; font-weight: 600; }
+    }
+
+    .about-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.25rem;
+    }
+    dialog {
+      max-inline-size: 500px;
+      inline-size: calc(100% - 2rem);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 1.35rem;
+      background: var(--surface);
+      color: var(--text);
+    }
+    dialog:modal { overscroll-behavior: contain; }
+    dialog::backdrop { background: rgba(7, 12, 24, 0.68); overscroll-behavior: contain; }
+    .visually-hidden:where(:not(:focus-within, :active)) {
+      position: absolute !important;
+      clip-path: inset(50%) !important;
+      overflow: hidden !important;
+      width: 1px !important;
+      height: 1px !important;
+      margin: -1px !important;
+      padding: 0 !important;
+      border: 0 !important;
+      white-space: nowrap !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="site-head">
+      <div>
+        <div class="brand-title" id="cms-brand">AurumStream Bullion Desk</div>
+        <div style="font-size:0.86rem;color:var(--muted);" id="cms-tagline">Real-Time Institutional Spot Gold &amp; Silver Reference Terminal</div>
+      </div>
+      <div class="controls">
+        <label for="currency-sel" class="visually-hidden">Display Currency</label>
+        <select id="currency-sel" aria-label="Select display currency">
+          <option value="USD" selected>USD ($)</option>
+          <option value="INR">INR (₹)</option>
+          <option value="EUR">EUR (€)</option>
+          <option value="GBP">GBP (£)</option>
+        </select>
+
+        <label for="cadence-sel" class="visually-hidden">Auto-update interval</label>
+        <select id="cadence-sel" aria-label="Select auto-refresh interval">
+          <option value="15">Auto: 15s</option>
+          <option value="30" selected>Auto: 30s</option>
+          <option value="60">Auto: 60s</option>
+        </select>
+
+        <button type="button" id="refresh-btn">↻ Refresh Spot</button>
+        <button type="button" id="open-cms-btn">✏️ CMS Edit</button>
+        <button type="button" id="theme-btn" aria-label="Toggle color scheme">🌓 Theme</button>
+      </div>
+    </header>
+
+    <div class="live-banner" role="status" aria-live="polite">
+      <div><span class="pulse" aria-hidden="true"></span><strong id="feed-status">Streaming live spot bullion feed...</strong></div>
+      <div style="color:var(--muted);">Next auto-sync in <strong id="countdown">30</strong>s · Gold/Silver Ratio: <strong id="gs-ratio">—</strong></div>
+    </div>
+
+    <section class="metal-cards" aria-label="Live spot bullion cards">
+      <article class="metal-card">
+        <div class="metal-head">
+          <strong style="color:var(--gold);font-size:1.05rem;">🥇 GOLD · XAU (999.9 Fine)</strong>
+          <span style="font-size:0.84rem;color:var(--muted);" id="xau-spread">Bid/Ask ±0.04%</span>
+        </div>
+        <div class="spot-big" id="xau-oz">$3,573.55 <span style="font-size:0.95rem;font-weight:500;color:var(--muted);">/ troy oz</span></div>
+        <div class="unit-strip">
+          <div><span>1 Gram (g)</span><strong id="xau-1g">—</strong></div>
+          <div><span>10 Grams (Tola)</span><strong id="xau-10g">—</strong></div>
+          <div><span>1 Kilogram (kg)</span><strong id="xau-1kg">—</strong></div>
+        </div>
+      </article>
+
+      <article class="metal-card">
+        <div class="metal-head">
+          <strong style="color:var(--silver);font-size:1.05rem;">🥈 SILVER · XAG (999.0 Fine)</strong>
+          <span style="font-size:0.84rem;color:var(--muted);" id="xag-spread">Bid/Ask ±0.08%</span>
+        </div>
+        <div class="spot-big" id="xag-oz">$40.95 <span style="font-size:0.95rem;font-weight:500;color:var(--muted);">/ troy oz</span></div>
+        <div class="unit-strip">
+          <div><span>1 Gram (g)</span><strong id="xag-1g">—</strong></div>
+          <div><span>10 Grams</span><strong id="xag-10g">—</strong></div>
+          <div><span>1 Kilogram (kg)</span><strong id="xag-1kg">—</strong></div>
+        </div>
+      </article>
+    </section>
+
+    <div id="sort-status" role="status" class="visually-hidden"></div>
+    <div tabindex="0" role="region" aria-labelledby="bullion-caption" class="table-wrapper">
+      <table id="bullion-table">
+        <caption id="bullion-caption">Live Bullion Weight Breakdown — Ounce, Gram, 10g &amp; Kilogram (Click Header to Sort)</caption>
+        <thead>
+          <tr>
+            <th scope="col" data-type="number" aria-sort="ascending"><button type="button" commandfor="bullion-table" command="--sort">Weight Unit <span class="sort-ind" aria-hidden="true"></span></button></th>
+            <th scope="col" data-type="number"><button type="button" commandfor="bullion-table" command="--sort">24K Gold (999.9) <span class="sort-ind" aria-hidden="true"></span></button></th>
+            <th scope="col" data-type="number"><button type="button" commandfor="bullion-table" command="--sort">22K Gold (916) <span class="sort-ind" aria-hidden="true"></span></button></th>
+            <th scope="col" data-type="number"><button type="button" commandfor="bullion-table" command="--sort">999 Fine Silver <span class="sort-ind" aria-hidden="true"></span></button></th>
+          </tr>
+        </thead>
+        <tbody id="bullion-tbody">
+          <tr data-grams="1"><th scope="row">1 Gram (1 g)</th><td>—</td><td>—</td><td>—</td></tr>
+          <tr data-grams="10"><th scope="row">10 Grams (10 g)</th><td>—</td><td>—</td><td>—</td></tr>
+          <tr data-grams="31.1034768"><th scope="row">1 Troy Ounce (31.1035 g)</th><td>—</td><td>—</td><td>—</td></tr>
+          <tr data-grams="100"><th scope="row">100 Grams (100 g)</th><td>—</td><td>—</td><td>—</td></tr>
+          <tr data-grams="1000"><th scope="row">1 Kilogram (1,000 g)</th><td>—</td><td>—</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <section class="about-grid">
+      <div class="metal-card">
+        <h2 style="margin-top:0;font-size:1.1rem;">About AurumStream Spot Desk</h2>
+        <p id="cms-about" style="color:var(--muted);margin-bottom:0;">Prices stream directly from live global spot feeds with zero page reloads or layout flicker, converting Troy Ounces (31.1034768g) into exact Gram, 10g, and Kilogram bullion benchmarks.</p>
+      </div>
+      <div class="metal-card">
+        <h2 style="margin-top:0;font-size:1.1rem;">🔔 Instant Gold Target Alert</h2>
+        <form id="alert-form" action="#alert" method="POST" style="display:flex;flex-wrap:wrap;gap:0.6rem;align-items:center;">
+          <label for="alert-price" style="font-size:0.9rem;font-weight:600;">Notify when Gold (1 oz USD) ≥</label>
+          <input type="number" id="alert-price" step="0.5" value="3600" required style="inline-size:130px;">
+          <button type="submit" class="btn-primary">Arm Alert</button>
+        </form>
+        <p id="alert-msg" role="status" style="margin:0.6rem 0 0;font-size:0.86rem;color:var(--muted);">No active price alert armed.</p>
+      </div>
+    </section>
+  </div>
+
+  <dialog id="cms-modal" closedby="any" aria-labelledby="cms-title">
+    <h2 id="cms-title" style="margin-top:0;">Lightweight No-Code CMS Controls</h2>
+    <p style="font-size:0.86rem;color:var(--muted);">Update site title, subtitle, and About copy instantly without editing HTML.</p>
+    <form id="cms-form" method="dialog" style="display:grid;gap:0.8rem;">
+      <div>
+        <label for="in-brand" style="display:block;font-weight:600;margin-bottom:0.25rem;">Brand Title</label>
+        <input type="text" id="in-brand" required style="inline-size:100%;">
+      </div>
+      <div>
+        <label for="in-tag" style="display:block;font-weight:600;margin-bottom:0.25rem;">Header Tagline</label>
+        <input type="text" id="in-tag" required style="inline-size:100%;">
+      </div>
+      <div>
+        <label for="in-about" style="display:block;font-weight:600;margin-bottom:0.25rem;">About Section Copy</label>
+        <textarea id="in-about" rows="3" required style="inline-size:100%;font:inherit;padding:0.6rem;border-radius:0.5rem;border:1px solid var(--border);background:var(--bg);color:var(--text);"></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:0.55rem;">
+        <button type="button" id="close-cms-btn">Cancel</button>
+        <button type="submit" class="btn-primary">Save Live Content</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    const TROY_OZ_GRAMS = 31.1034768;
+    const SYMBOLS = { USD: "$", INR: "₹", EUR: "€", GBP: "£" };
+
+    const state = {
+      xauUsd: 3573.55,
+      xagUsd: 40.95,
+      fx: { USD: 1, INR: 86.4, EUR: 0.94, GBP: 0.79 },
+      currency: "USD",
+      cadenceSec: 30,
+      remainingSec: 30,
+      alertTargetUsd: null
+    };
+
+    function fmt(amount) {
+      const sym = SYMBOLS[state.currency] || "$";
+      return sym + amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function paintPrices() {
+      const rate = state.fx[state.currency] || 1;
+      const xauOz = state.xauUsd * rate;
+      const xagOz = state.xagUsd * rate;
+      const xauGram = xauOz / TROY_OZ_GRAMS;
+      const xagGram = xagOz / TROY_OZ_GRAMS;
+
+      document.getElementById("xau-oz").innerHTML = `${fmt(xauOz)} <span style="font-size:0.95rem;font-weight:500;color:var(--muted);">/ troy oz</span>`;
+      document.getElementById("xag-oz").innerHTML = `${fmt(xagOz)} <span style="font-size:0.95rem;font-weight:500;color:var(--muted);">/ troy oz</span>`;
+
+      document.getElementById("xau-1g").textContent = fmt(xauGram);
+      document.getElementById("xau-10g").textContent = fmt(xauGram * 10);
+      document.getElementById("xau-1kg").textContent = fmt(xauGram * 1000);
+
+      document.getElementById("xag-1g").textContent = fmt(xagGram);
+      document.getElementById("xag-10g").textContent = fmt(xagGram * 10);
+      document.getElementById("xag-1kg").textContent = fmt(xagGram * 1000);
+
+      document.getElementById("gs-ratio").textContent = (state.xauUsd / state.xagUsd).toFixed(1) + "x";
+
+      // Update existing table rows in place (zero DOM teardown / zero flicker!)
+      const tbody = document.getElementById("bullion-tbody");
+      for (const row of tbody.rows) {
+        const g = Number(row.dataset.grams);
+        row.cells[0].dataset.value = String(g);
+        const g24 = xauGram * g;
+        const g22 = g24 * (22 / 24);
+        const silv = xagGram * g;
+        row.cells[1].dataset.value = String(g24);
+        row.cells[1].textContent = fmt(g24);
+        row.cells[2].dataset.value = String(g22);
+        row.cells[2].textContent = fmt(g22);
+        row.cells[3].dataset.value = String(silv);
+        row.cells[3].textContent = fmt(silv);
+      }
+
+      if (state.alertTargetUsd && state.xauUsd >= state.alertTargetUsd) {
+        document.getElementById("alert-msg").textContent = `🚨 TARGET HIT: Spot Gold ($${state.xauUsd.toFixed(2)}) reached $${state.alertTargetUsd.toFixed(2)}!`;
+      }
+    }
+
+    async function fetchLiveSpot() {
+      try {
+        const [rGold, rSilver, rFx] = await Promise.all([
+          fetch("https://api.gold-api.com/price/XAU"),
+          fetch("https://api.gold-api.com/price/XAG"),
+          fetch("https://open.er-api.com/v6/latest/USD")
+        ]);
+        if (rGold.ok) {
+          const g = await rGold.json();
+          if (Number(g.price) > 100) state.xauUsd = Number(g.price);
+        }
+        if (rSilver.ok) {
+          const s = await rSilver.json();
+          if (Number(s.price) > 1) state.xagUsd = Number(s.price);
+        }
+        if (rFx.ok) {
+          const fx = await rFx.json();
+          if (fx.rates) {
+            state.fx.INR = Number(fx.rates.INR || state.fx.INR);
+            state.fx.EUR = Number(fx.rates.EUR || state.fx.EUR);
+            state.fx.GBP = Number(fx.rates.GBP || state.fx.GBP);
+          }
+        }
+        document.getElementById("feed-status").textContent =
+          `Live Spot Connected · Updated ${new Date().toLocaleTimeString()}`;
+      } catch {
+        document.getElementById("feed-status").textContent =
+          `Resilient Cached Spot Mode · Last checked ${new Date().toLocaleTimeString()}`;
+      }
+      state.remainingSec = state.cadenceSec;
+      paintPrices();
+    }
+
+    // Countdown loop
+    setInterval(() => {
+      state.remainingSec -= 1;
+      if (state.remainingSec <= 0) {
+        fetchLiveSpot();
+      } else {
+        document.getElementById("countdown").textContent = String(state.remainingSec);
+      }
+    }, 1000);
+
+    document.getElementById("currency-sel").addEventListener("change", (e) => {
+      state.currency = e.target.value;
+      paintPrices();
+    });
+    document.getElementById("cadence-sel").addEventListener("change", (e) => {
+      state.cadenceSec = Number(e.target.value);
+      state.remainingSec = state.cadenceSec;
+      document.getElementById("countdown").textContent = String(state.remainingSec);
+    });
+    document.getElementById("refresh-btn").addEventListener("click", fetchLiveSpot);
+
+    // Price Alert
+    document.getElementById("alert-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      state.alertTargetUsd = Number(document.getElementById("alert-price").value);
+      document.getElementById("alert-msg").textContent = `✅ Armed: Monitoring XAU/USD ≥ $${state.alertTargetUsd.toFixed(2)}`;
+      paintPrices();
+    });
+
+    // Sortable Table (Invoker Commands + Fallback + DOM Row Reorder)
+    const table = document.getElementById("bullion-table");
+    const tbody = document.getElementById("bullion-tbody");
+    const sortStatus = document.getElementById("sort-status");
+    function sortBy(button) {
+      const th = button.closest("th");
+      const direction = th.getAttribute("aria-sort") === "ascending" ? "descending" : "ascending";
+      for (const h of table.tHead.rows[0].cells) h.removeAttribute("aria-sort");
+      th.setAttribute("aria-sort", direction);
+      const factor = direction === "ascending" ? 1 : -1;
+      const idx = th.cellIndex;
+      const ordered = [...tbody.rows].sort((a, b) =>
+        factor * (Number(a.cells[idx].dataset.value) - Number(b.cells[idx].dataset.value))
+      );
+      for (const r of ordered) {
+        if (tbody.moveBefore) tbody.moveBefore(r, null);
+        else tbody.appendChild(r);
+      }
+      sortStatus.textContent = `Sorted by ${button.textContent.trim()}, ${direction}`;
+    }
+    table.addEventListener("command", (e) => { if (e.command === "--sort") sortBy(e.source); });
+    if (!("commandForElement" in HTMLButtonElement.prototype)) {
+      for (const b of table.tHead.querySelectorAll('button[command="--sort"]')) {
+        b.addEventListener("click", () => sortBy(b));
+      }
+    }
+
+    // Theme Toggle + Storage Sync
+    const metaScheme = document.querySelector('meta[name="color-scheme"]');
+    window.addEventListener("storage", (e) => {
+      if (e.key === "color-scheme") metaScheme.content = e.newValue ?? "light dark";
+    });
+    document.getElementById("theme-btn").addEventListener("click", () => {
+      const sysDark = matchMedia("(prefers-color-scheme: dark)").matches;
+      const stored = localStorage.getItem("color-scheme");
+      const renderedDark = stored ? stored === "dark" : sysDark;
+      const target = renderedDark ? "light" : "dark";
+      const matchesSys = (target === "dark") === sysDark;
+      if (matchesSys) localStorage.removeItem("color-scheme");
+      else localStorage.setItem("color-scheme", target);
+      metaScheme.content = matchesSys ? "light dark" : target;
+    });
+
+    // CMS Modal + Safari closedby Fallback
+    const cmsModal = document.getElementById("cms-modal");
+    if (!("closedBy" in HTMLDialogElement.prototype)) {
+      cmsModal.addEventListener("click", (ev) => {
+        if (ev.target !== cmsModal) return;
+        const r = cmsModal.getBoundingClientRect();
+        const inside = r.top <= ev.clientY && ev.clientY <= r.top + r.height && r.left <= ev.clientX && ev.clientX <= r.left + r.width;
+        if (!inside) cmsModal.close();
+      });
+    }
+    document.getElementById("open-cms-btn").addEventListener("click", () => {
+      document.getElementById("in-brand").value = document.getElementById("cms-brand").textContent;
+      document.getElementById("in-tag").value = document.getElementById("cms-tagline").textContent;
+      document.getElementById("in-about").value = document.getElementById("cms-about").textContent;
+      cmsModal.showModal();
+    });
+    document.getElementById("close-cms-btn").addEventListener("click", () => cmsModal.close());
+    document.getElementById("cms-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      document.getElementById("cms-brand").textContent = document.getElementById("in-brand").value;
+      document.getElementById("cms-tagline").textContent = document.getElementById("in-tag").value;
+      document.getElementById("cms-about").textContent = document.getElementById("in-about").value;
+      cmsModal.close();
+    });
+
+    paintPrices();
+    fetchLiveSpot();
+  </script>
+</body>
+</html>

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    try {
+      document.querySelector('meta[name="color-scheme"]').content = localStorage.getItem("color-scheme") ?? "light dark";
+    } catch {}
+  </script>
+  <title>Analysis Col — Deriv Live Digit &amp; Volatility Terminal (ES / EN)</title>
+  <style>
+    :root {
+      --bg-light: #f6fbf8;
+      --bg-dark: #07130e;
+      --surface-light: #ffffff;
+      --surface-dark: #0d1f18;
+      --surface-2-light: #ecfdf5;
+      --surface-2-dark: #132c22;
+      --text-light: #062218;
+      --text-dark: #ecfdf5;
+      --muted-light: #3f6254;
+      --muted-dark: #94b8a8;
+      --border-light: #b7e4cf;
+      --border-dark: #234b3b;
+      --brand-light: #059669;
+      --brand-dark: #34d399;
+      --brand-fg-light: #ffffff;
+      --brand-fg-dark: #042419;
+      --danger-light: #dc2626;
+      --danger-dark: #f87171;
+      --danger-bg-light: #fef2f2;
+      --danger-bg-dark: #3b1219;
+
+      --bg: var(--bg-light);
+      --surface: var(--surface-light);
+      --surface-2: var(--surface-2-light);
+      --text: var(--text-light);
+      --muted: var(--muted-light);
+      --border: var(--border-light);
+      --brand: var(--brand-light);
+      --brand-fg: var(--brand-fg-light);
+      --danger: var(--danger-light);
+      --danger-bg: var(--danger-bg-light);
+
+      @media (prefers-color-scheme: dark) {
+        --bg: var(--bg-dark);
+        --surface: var(--surface-dark);
+        --surface-2: var(--surface-2-dark);
+        --text: var(--text-dark);
+        --muted: var(--muted-dark);
+        --border: var(--border-dark);
+        --brand: var(--brand-dark);
+        --brand-fg: var(--brand-fg-dark);
+        --danger: var(--danger-dark);
+        --danger-bg: var(--danger-bg-dark);
+      }
+
+      @supports (color: light-dark(white, black)) {
+        --bg: light-dark(var(--bg-light), var(--bg-dark));
+        --surface: light-dark(var(--surface-light), var(--surface-dark));
+        --surface-2: light-dark(var(--surface-2-light), var(--surface-2-dark));
+        --text: light-dark(var(--text-light), var(--text-dark));
+        --muted: light-dark(var(--muted-light), var(--muted-dark));
+        --border: light-dark(var(--border-light), var(--border-dark));
+        --brand: light-dark(var(--brand-light), var(--brand-dark));
+        --brand-fg: light-dark(var(--brand-fg-light), var(--brand-fg-dark));
+        --danger: light-dark(var(--danger-light), var(--danger-dark));
+        --danger-bg: light-dark(var(--danger-bg-light), var(--danger-bg-dark));
+      }
+
+      color-scheme: light dark;
+      accent-color: var(--brand);
+
+      &:has(> head > meta[name="color-scheme"][content="dark"]) {
+        color-scheme: dark;
+      }
+      &:has(> head > meta[name="color-scheme"][content="light"]) {
+        color-scheme: light;
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .container { max-inline-size: 1180px; margin-inline: auto; padding: 1.25rem; }
+    header.topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-block-end: 1rem;
+      border-block-end: 1px solid var(--border);
+      margin-block-end: 1.4rem;
+    }
+    .brand { display: flex; align-items: center; gap: 0.6rem; font-weight: 800; font-size: 1.35rem; }
+    .dot { inline-size: 12px; block-size: 12px; border-radius: 999px; background: var(--brand); }
+    .actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+    button {
+      font: inherit;
+      font-weight: 600;
+      min-block-size: 48px;
+      padding: 0.55rem 1rem;
+      border-radius: 0.65rem;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+    }
+    button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 3px solid var(--brand);
+      outline-offset: 2px;
+    }
+    .btn-brand { background: var(--brand); color: var(--brand-fg); border-color: transparent; }
+    .layout {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.25rem;
+      align-items: start;
+    }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 1.25rem;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      margin-block-end: 1.1rem;
+    }
+    .field label { font-weight: 600; font-size: 0.92rem; }
+    .hint { font-size: 0.82rem; color: var(--muted); }
+    .field :is(input, select) {
+      font: inherit;
+      font-size: max(1rem, 1em);
+      min-block-size: 48px;
+      padding: 0.6rem 0.85rem;
+      border-radius: 0.6rem;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      inline-size: 100%;
+    }
+    .token-row { display: flex; gap: 0.5rem; }
+    .error-msg { display: none; color: var(--danger); font-size: 0.84rem; font-weight: 600; }
+    :is(:user-invalid, .user-invalid-fallback) {
+      border-color: var(--danger) !important;
+      background-color: var(--danger-bg) !important;
+    }
+    :is(:user-invalid, .user-invalid-fallback) + .error-msg { display: block; }
+    .digit-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.55rem;
+      margin-block: 0.85rem 1.15rem;
+    }
+    .digit-cell {
+      padding: 0.6rem 0.4rem;
+      border-radius: 0.65rem;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      text-align: center;
+    }
+    .digit-cell.hot { border: 2px solid var(--brand); font-weight: 800; }
+    .signal-box {
+      padding: 1rem;
+      border-radius: 0.85rem;
+      background: var(--surface-2);
+      border: 2px solid var(--brand);
+      margin-block-end: 1rem;
+    }
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 0.65rem;
+      margin-block-end: 1rem;
+    }
+    .kpi {
+      padding: 0.75rem;
+      border-radius: 0.75rem;
+      border: 1px solid var(--border);
+      background: var(--bg);
+    }
+
+    /* Responsive History Table (@container stacked mobile fallback) */
+    .table-wrapper {
+      overflow: auto;
+      max-inline-size: 100%;
+      max-block-size: min(380px, 70vh);
+      container-type: inline-size;
+      border: 1px solid var(--border);
+      border-radius: 0.85rem;
+      margin-block-top: 1.25rem;
+    }
+    table { inline-size: 100%; border-collapse: separate; border-spacing: 0; }
+    caption { text-align: start; padding: 0.85rem 1rem; font-weight: 700; border-block-end: 1px solid var(--border); }
+    thead { position: sticky; inset-block-start: 0; z-index: 1; background: var(--surface-2); }
+    th, td { padding: 0.7rem 0.9rem; text-align: start; border-block-end: 1px solid var(--border); font-size: 0.9rem; }
+    tbody th { position: sticky; inset-inline-start: 0; background: var(--surface); }
+    @container (width < 600px) {
+      table, thead, tbody, tr, th, td { display: block; }
+      thead { display: none; }
+      tr { margin: 0.75rem; border: 1px solid var(--border); border-radius: 0.65rem; }
+      tbody th { position: sticky; inset-block-start: 0; z-index: 2; background: var(--surface-2); }
+      table {
+        --label-2: "Contrato / Contract";
+        --label-3: "Stake";
+        --label-4: "Resultado / PnL";
+      }
+      td:nth-child(2)::before { content: var(--label-2) ": "; font-weight: 600; }
+      td:nth-child(3)::before { content: var(--label-3) ": "; font-weight: 600; }
+      td:nth-child(4)::before { content: var(--label-4) ": "; font-weight: 600; }
+    }
+    .visually-hidden:where(:not(:focus-within, :active)) {
+      position: absolute !important;
+      clip-path: inset(50%) !important;
+      overflow: hidden !important;
+      width: 1px !important;
+      height: 1px !important;
+      margin: -1px !important;
+      padding: 0 !important;
+      border: 0 !important;
+      white-space: nowrap !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="topbar">
+      <div class="brand">
+        <span class="dot" aria-hidden="true"></span>
+        <span>Analysis Col · Deriv WebSocket v3</span>
+      </div>
+      <div class="actions">
+        <button type="button" id="lang-btn" aria-label="Switch language Español / English">ES / EN</button>
+        <button type="button" id="theme-btn" aria-label="Toggle light or dark theme">Tema / Theme</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <section class="panel" aria-labelledby="cfg-heading">
+        <h1 id="cfg-heading" style="margin-top:0;font-size:1.2rem;" data-i18n="cfgTitle">Conexión por API Token y Gestión de Riesgo</h1>
+        <form id="connect-form" action="#connect" method="POST" aria-labelledby="cfg-heading">
+          <div class="field">
+            <label for="apiToken" data-i18n="tokenLabel">Deriv API Token (Demo o Real — Nunca contraseña)</label>
+            <span id="token-hint" class="hint" data-i18n="tokenHint">Deje vacío para ver análisis público en vivo, o pegue su Token para operar.</span>
+            <div class="token-row">
+              <input type="password" id="apiToken" name="apiToken" minlength="8" maxlength="64" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" aria-describedby="token-hint">
+              <button type="button" id="toggle-token" aria-pressed="false" aria-label="Show API token">👁</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="symbol" data-i18n="marketLabel">Mercado Volatility</label>
+            <select id="symbol" name="symbol">
+              <option value="R_10" data-pip="3">Volatility 10 Index (R_10)</option>
+              <option value="R_25" data-pip="3">Volatility 25 Index (R_25)</option>
+              <option value="R_50" data-pip="4">Volatility 50 Index (R_50)</option>
+              <option value="R_75" data-pip="4">Volatility 75 Index (R_75)</option>
+              <option value="R_100" data-pip="2" selected>Volatility 100 Index (R_100)</option>
+            </select>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.6rem;">
+            <div class="field">
+              <label for="stake">Stake ($)</label>
+              <input type="number" id="stake" name="stake" value="1.00" min="0.35" step="0.05" required data-error="err-stake">
+              <div id="err-stake" class="error-msg"><span role="img" aria-label="Error">❌</span> Min $0.35</div>
+            </div>
+            <div class="field">
+              <label for="takeProfit">Take Profit ($)</label>
+              <input type="number" id="takeProfit" name="takeProfit" value="10.00" min="0.50" step="0.50" required>
+            </div>
+            <div class="field">
+              <label for="stopLoss">Stop Loss ($)</label>
+              <input type="number" id="stopLoss" name="stopLoss" value="10.00" min="0.50" step="0.50" required>
+            </div>
+          </div>
+
+          <fieldset style="border:1px solid var(--border);border-radius:0.7rem;padding:0.75rem;margin:0 0 1rem;">
+            <legend style="font-weight:700;font-size:0.9rem;" data-i18n="modeLegend">Modo de Ejecución</legend>
+            <div style="display:flex;flex-wrap:wrap;gap:1rem;">
+              <div>
+                <input type="radio" id="mode-manual" name="execMode" value="manual" checked>
+                <label for="mode-manual" data-i18n="modeManual">Alerta + Confirmación Manual</label>
+              </div>
+              <div>
+                <input type="radio" id="mode-auto" name="execMode" value="auto">
+                <label for="mode-auto" data-i18n="modeAuto">Modo Auto Bot (Respeta TP / SL)</label>
+              </div>
+            </div>
+          </fieldset>
+
+          <div style="display:flex;gap:0.65rem;flex-wrap:wrap;">
+            <button type="submit" class="btn-brand" id="start-btn" data-i18n="connectBtn">Conectar / Iniciar Análisis</button>
+            <button type="button" id="stop-btn" data-i18n="stopBtn">Detener</button>
+          </div>
+        </form>
+        <p id="acct-status" role="status" style="margin:0.85rem 0 0;font-size:0.9rem;color:var(--muted);">Estado: Desconectado</p>
+      </section>
+
+      <section class="panel" aria-labelledby="live-heading">
+        <h2 id="live-heading" style="margin-top:0;font-size:1.2rem;" data-i18n="liveTitle">Mapa de Dígitos (0–9) y Señal en Vivo</h2>
+
+        <div class="signal-box" role="status" aria-live="polite">
+          <div style="font-size:0.82rem;color:var(--muted);" id="quote-line">Precio actual: —</div>
+          <div style="font-size:1.18rem;font-weight:800;margin-block:0.25rem;" id="signal-text">ESPERA · Conecte para recibir ticks en vivo</div>
+          <button type="button" class="btn-brand" id="confirm-trade-btn" hidden style="margin-top:0.5rem;" data-i18n="confirmBtn">✅ Confirmar y Lanzar Operación Ahora</button>
+        </div>
+
+        <div class="kpi-row">
+          <div class="kpi"><small>Even / Odd</small><br><strong id="kpi-eo">0% / 0%</strong></div>
+          <div class="kpi"><small>Over 5 / Under 4</small><br><strong id="kpi-ou">0% / 0%</strong></div>
+          <div class="kpi"><small>Rise / Fall</small><br><strong id="kpi-rf">0% / 0%</strong></div>
+          <div class="kpi"><small>Sesión PnL</small><br><strong id="kpi-pnl">$0.00 (0W/0L)</strong></div>
+        </div>
+
+        <div class="digit-grid" id="digit-grid" aria-label="Digit frequency heatmap"></div>
+      </section>
+    </div>
+
+    <div tabindex="0" role="region" aria-labelledby="hist-caption" class="table-wrapper">
+      <table>
+        <caption id="hist-caption" data-i18n="histCaption">Historial de Operaciones Verificadas en Sesión</caption>
+        <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col" data-i18n="colType">Contrato</th>
+            <th scope="col">Stake</th>
+            <th scope="col">PnL</th>
+          </tr>
+        </thead>
+        <tbody id="trade-tbody">
+          <tr>
+            <th scope="row">—</th>
+            <td colspan="3" style="color:var(--muted);" data-i18n="emptyHist">Sin operaciones ejecutadas todavía.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module">
+    import { DerivAnalysisColClient, SessionRiskController } from "./analysisColCore.mjs";
+
+    const I18N = {
+      es: {
+        cfgTitle: "Conexión por API Token y Gestión de Riesgo",
+        tokenLabel: "Deriv API Token (Demo o Real — Nunca contraseña)",
+        tokenHint: "Deje vacío para ver análisis público en vivo, o pegue su Token para operar.",
+        marketLabel: "Mercado Volatility",
+        modeLegend: "Modo de Ejecución",
+        modeManual: "Alerta + Confirmación Manual",
+        modeAuto: "Modo Auto Bot (Respeta TP / SL)",
+        connectBtn: "Conectar / Iniciar Análisis",
+        stopBtn: "Detener",
+        liveTitle: "Mapa de Dígitos (0–9) y Señal en Vivo",
+        confirmBtn: "✅ Confirmar y Lanzar Operación Ahora",
+        histCaption: "Historial de Operaciones Verificadas en Sesión",
+        colType: "Contrato",
+        emptyHist: "Sin operaciones ejecutadas todavía."
+      },
+      en: {
+        cfgTitle: "API Token Connection & Session Risk Guard",
+        tokenLabel: "Deriv API Token (Demo or Real — Never password)",
+        tokenHint: "Leave blank for live public market feed, or paste API Token to trade.",
+        marketLabel: "Volatility Market",
+        modeLegend: "Execution Mode",
+        modeManual: "Signal Alert + Manual Confirmation",
+        modeAuto: "Auto Bot Mode (Strict TP / SL)",
+        connectBtn: "Connect / Start Analysis",
+        stopBtn: "Stop",
+        liveTitle: "Live Digit Heatmap (0–9) & Signal Engine",
+        confirmBtn: "✅ Confirm & Place Trade Now",
+        histCaption: "Verified Session Trade History",
+        colType: "Contract",
+        emptyHist: "No trades placed in this session yet."
+      }
+    };
+
+    let lang = "es";
+    let pendingSignal = null;
+    let risk = new SessionRiskController();
+
+    const digitGrid = document.getElementById("digit-grid");
+    function renderDigits(pcts = Array(10).fill(0), hot = -1) {
+      digitGrid.innerHTML = pcts.map((p, d) =>
+        `<div class="digit-cell ${d === hot ? "hot" : ""}"><div>#${d}</div><strong>${p}%</strong></div>`
+      ).join("");
+    }
+    renderDigits();
+
+    // Theme Toggle + Storage Sync
+    const metaScheme = document.querySelector('meta[name="color-scheme"]');
+    window.addEventListener("storage", (e) => {
+      if (e.key === "color-scheme") metaScheme.content = e.newValue ?? "light dark";
+    });
+    document.getElementById("theme-btn").addEventListener("click", () => {
+      const sysDark = matchMedia("(prefers-color-scheme: dark)").matches;
+      const stored = localStorage.getItem("color-scheme");
+      const renderedDark = stored ? stored === "dark" : sysDark;
+      const target = renderedDark ? "light" : "dark";
+      const matchesSys = (target === "dark") === sysDark;
+      if (matchesSys) localStorage.removeItem("color-scheme");
+      else localStorage.setItem("color-scheme", target);
+      metaScheme.content = matchesSys ? "light dark" : target;
+    });
+
+    // Language Switcher
+    document.getElementById("lang-btn").addEventListener("click", () => {
+      lang = lang === "es" ? "en" : "es";
+      document.documentElement.lang = lang;
+      for (const el of document.querySelectorAll("[data-i18n]")) {
+        const key = el.dataset.i18n;
+        if (I18N[lang][key]) el.textContent = I18N[lang][key];
+      }
+    });
+
+    // Accessible Password/Token Unmask Toggle
+    const tokenInput = document.getElementById("apiToken");
+    const toggleTokenBtn = document.getElementById("toggle-token");
+    toggleTokenBtn.addEventListener("click", () => {
+      const shown = tokenInput.type === "text";
+      tokenInput.type = shown ? "password" : "text";
+      toggleTokenBtn.setAttribute("aria-pressed", String(!shown));
+    });
+
+    const client = new DerivAnalysisColClient({
+      onAccountAuth(acct) {
+        document.getElementById("acct-status").textContent =
+          `✅ ${acct.loginid} (${acct.isVirtual ? "DEMO" : "REAL"}) · Balance: ${acct.balance.toFixed(2)} ${acct.currency}`;
+      },
+      onTickAnalysis({ symbol, pipSize, latestQuote, tickStats }) {
+        document.getElementById("quote-line").textContent =
+          `${symbol} · Tick: ${latestQuote !== null ? latestQuote.toFixed(pipSize) : "—"} · Last Digits: [${tickStats.lastDigits.slice(-8).join(", ")}]`;
+        document.getElementById("signal-text").textContent =
+          lang === "es" ? tickStats.signal.labelEs : tickStats.signal.labelEn;
+        document.getElementById("kpi-eo").textContent = `${tickStats.evenPct}% / ${tickStats.oddPct}%`;
+        document.getElementById("kpi-ou").textContent = `${tickStats.overPct}% / ${tickStats.underPct}%`;
+        document.getElementById("kpi-rf").textContent = `${tickStats.risePct}% / ${tickStats.fallPct}%`;
+        renderDigits(tickStats.digitPct, tickStats.hotDigit);
+
+        const confirmBtn = document.getElementById("confirm-trade-btn");
+        if (tickStats.signal.action === "BUY_NOW" && client.account) {
+          pendingSignal = tickStats.signal;
+          if (risk.requireManualApproval) {
+            confirmBtn.hidden = false;
+          } else {
+            confirmBtn.hidden = true;
+            const check = risk.canOpenTrade({ manualApproved: true });
+            if (check.allowed) {
+              client.placeTrade({
+                contractType: pendingSignal.contractType,
+                barrier: pendingSignal.barrier,
+                stake: check.stake
+              });
+            }
+          }
+        } else {
+          confirmBtn.hidden = true;
+        }
+      },
+      onTradeResult(res) {
+        const snap = risk.recordSettlement(res.profit);
+        document.getElementById("kpi-pnl").textContent =
+          `$${snap.netProfit.toFixed(2)} (${snap.wins}W/${snap.losses}L)`;
+        const tbody = document.getElementById("trade-tbody");
+        if (tbody.rows.length === 1 && tbody.rows[0].cells.length === 2) tbody.innerHTML = "";
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<th scope="row">#${res.contractId}</th><td>${res.status.toUpperCase()}</td><td>$${res.buyPrice.toFixed(2)}</td><td>${res.profit >= 0 ? "+" : ""}$${res.profit.toFixed(2)}</td>`;
+        tbody.prepend(tr);
+      },
+      onError(err) {
+        document.getElementById("acct-status").textContent = `⚠️ ${err?.message || JSON.stringify(err)}`;
+      }
+    });
+
+    document.getElementById("confirm-trade-btn").addEventListener("click", () => {
+      if (!pendingSignal) return;
+      const check = risk.canOpenTrade({ manualApproved: true });
+      if (!check.allowed) return;
+      client.placeTrade({
+        contractType: pendingSignal.contractType,
+        barrier: pendingSignal.barrier,
+        stake: check.stake
+      });
+      document.getElementById("confirm-trade-btn").hidden = true;
+    });
+
+    const connectForm = document.getElementById("connect-form");
+    const linkError = (el, shown) => {
+      const errorId = el.dataset?.error;
+      if (!errorId) return;
+      const ids = (el.getAttribute("aria-describedby") || "").split(/\s+/).filter((id) => id && id !== errorId);
+      if (shown) ids.push(errorId);
+      if (ids.length) el.setAttribute("aria-describedby", ids.join(" "));
+      else el.removeAttribute("aria-describedby");
+    };
+    const syncAria = (el) => {
+      if (!el.matches?.("input, select, textarea")) return;
+      const invalid = el.matches(":user-invalid");
+      el.setAttribute("aria-invalid", invalid ? "true" : "false");
+      linkError(el, invalid);
+    };
+    connectForm.querySelectorAll("input, select, textarea").forEach((el) => syncAria(el));
+    connectForm.addEventListener("blur", (e) => syncAria(e.target), true);
+    connectForm.addEventListener("input", (e) => syncAria(e.target));
+    connectForm.addEventListener("invalid", (e) => syncAria(e.target), true);
+
+    connectForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const form = e.currentTarget;
+      if (!form.checkValidity()) {
+        form.querySelector(":invalid")?.focus();
+        return;
+      }
+      const sel = document.getElementById("symbol");
+      const pipSize = Number(sel.selectedOptions[0]?.dataset.pip || 2);
+      const manual = document.getElementById("mode-manual").checked;
+      risk = new SessionRiskController({
+        baseStake: Number(document.getElementById("stake").value),
+        takeProfit: Number(document.getElementById("takeProfit").value),
+        stopLoss: Number(document.getElementById("stopLoss").value),
+        requireManualApproval: manual
+      });
+      document.getElementById("acct-status").textContent = "Conectando a wss://ws.binaryws.com/websockets/v3?app_id=1089 ...";
+      client.connect({
+        apiToken: tokenInput.value,
+        symbol: sel.value,
+        pipSize
+      });
+    });
+
+    document.getElementById("stop-btn").addEventListener("click", () => {
+      client.disconnect();
+      document.getElementById("acct-status").textContent = "⏹ Sesión detenida.";
+    });
+
+    // Auto-start public live R_100 stream on load so visitors immediately see live Deriv ticks
+    client.connect({ symbol: "R_100", pipSize: 2 });
+    document.getElementById("acct-status").textContent = "🟢 Streaming público en vivo (R_100) · Pegue su API Token arriba para operar en Demo o Real.";
+  </script>
+</body>
+</html>

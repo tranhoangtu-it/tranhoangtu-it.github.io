@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    try {
+      document.querySelector('meta[name="color-scheme"]').content = localStorage.getItem("color-scheme") ?? "light dark";
+    } catch {}
+  </script>
+  <title>Live Engineering Prototypes &amp; Interactive Client Demos — Tran Hoang Tu</title>
+  <meta name="description" content="Interactive zero-dependency web engineering demos: Claude AI Risk Reporter, Live Gold & Silver Bullion Terminal, and Analysis Col Deriv WebSocket v3 Analyzer.">
+  <style>
+    :root {
+      --bg: light-dark(#f8fafc, #090d16);
+      --surface: light-dark(#ffffff, #111827);
+      --text: light-dark(#0f172a, #f8fafc);
+      --muted: light-dark(#475569, #94a3b8);
+      --border: light-dark(#cbd5e1, #334155);
+      --accent: light-dark(#0284c7, #38bdf8);
+      color-scheme: light dark;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.55; }
+    .container { max-inline-size: 980px; margin-inline: auto; padding: 2rem 1.25rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.15rem; margin-top: 1.5rem; }
+    article.card { background: var(--surface); border: 1px solid var(--border); border-radius: 0.95rem; padding: 1.25rem; }
+    a { color: var(--accent); font-weight: 600; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <p><a href="/">← Back to Main Engineering Hub</a></p>
+    <h1 style="margin:0.4rem 0;">Interactive Client Prototypes &amp; Live Web Demos</h1>
+    <p style="color:var(--muted);margin:0;">Zero-dependency, accessible, production-grade interactive web workbenches built by Tran Hoang Tu.</p>
+
+    <div class="grid">
+      <article class="card">
+        <h2 style="margin-top:0;font-size:1.12rem;"><a href="/demos/claude-risk-reporter/">🛡️ Claude AI Project Risk Reporter (CN / EN)</a></h2>
+        <p style="color:var(--muted);font-size:0.92rem;">Bilingual Simplified Chinese &amp; English risk tracker with CSV batch import, duplicate history detection, Claude API integration, and 1-click Weekly Markdown/PDF export.</p>
+      </article>
+
+      <article class="card">
+        <h2 style="margin-top:0;font-size:1.12rem;"><a href="/demos/live-bullion-rates/">🥇 AurumStream Live Gold &amp; Silver Terminal</a></h2>
+        <p style="color:var(--muted);font-size:0.92rem;">Zero-flicker real-time XAU &amp; XAG spot prices across USD, INR, EUR &amp; GBP with Gram / 10g / Troy Oz / Kg breakdown, target alerts, and lightweight CMS editor.</p>
+      </article>
+
+      <article class="card">
+        <h2 style="margin-top:0;font-size:1.12rem;"><a href="/demos/analysis-col-deriv/">📈 Analysis Col — Deriv WebSocket v3 Analyzer (ES / EN)</a></h2>
+        <p style="color:var(--muted);font-size:0.92rem;">Bilingual Spanish &amp; English Deriv Volatility 10–100 live tick digit heatmap, Over/Under &amp; momentum signal engine, API Token auth, and Manual/Auto TP/SL controller.</p>
+      </article>
+    </div>
+  </main>
+</body>
+</html>
