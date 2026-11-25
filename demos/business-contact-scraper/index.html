@@ -1,0 +1,1970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    try {
+      document.querySelector('meta[name="color-scheme"]').content = localStorage.getItem("color-scheme") ?? "light dark";
+    } catch {}
+  </script>
+  <title>Business Contact &amp; Google Maps Scraper Workbench — Scrapy + Playwright Demo</title>
+  <meta name="description" content="Interactive multi-source business directory & Google Maps contact scraper prototype: E.164 phone & root-domain deduplication, email & social enrichment, robots.txt compliance, clean CSV export, and downloadable Python Scrapy spider.">
+  <style>
+    :root {
+      --bg-light: #f8fafc;
+      --bg-dark: #070b14;
+      --surface-light: #ffffff;
+      --surface-dark: #0f172a;
+      --surface-alt-light: #f1f5f9;
+      --surface-alt-dark: #1e293b;
+      --surface-elev-light: #e2e8f0;
+      --surface-elev-dark: #263349;
+      --text-light: #0f172a;
+      --text-dark: #f8fafc;
+      --muted-light: #475569;
+      --muted-dark: #94a3b8;
+      --border-light: #cbd5e1;
+      --border-dark: #334155;
+      --accent-light: #0284c7;
+      --accent-dark: #38bdf8;
+      --accent-strong-light: #0369a1;
+      --accent-strong-dark: #0ea5e9;
+      --accent-soft-light: #e0f2fe;
+      --accent-soft-dark: #0c4a6e;
+      --ok-bg-light: #dcfce7;
+      --ok-bg-dark: #064e3b;
+      --ok-fg-light: #166534;
+      --ok-fg-dark: #6ee7b7;
+      --warn-bg-light: #fef3c7;
+      --warn-bg-dark: #78350f;
+      --warn-fg-light: #92400e;
+      --warn-fg-dark: #fcd34d;
+      --dup-bg-light: #fee2e2;
+      --dup-bg-dark: #7f1d1d;
+      --dup-fg-light: #991b1b;
+      --dup-fg-dark: #fca5a5;
+      --scroll-thumb-light: #64748b;
+      --scroll-thumb-dark: #64748b;
+      --scroll-track-light: #e2e8f0;
+      --scroll-track-dark: #0f172a;
+
+      --bg: var(--bg-light);
+      --surface: var(--surface-light);
+      --surface-alt: var(--surface-alt-light);
+      --surface-elev: var(--surface-elev-light);
+      --text: var(--text-light);
+      --muted: var(--muted-light);
+      --border: var(--border-light);
+      --accent: var(--accent-light);
+      --accent-strong: var(--accent-strong-light);
+      --accent-soft: var(--accent-soft-light);
+      --ok-bg: var(--ok-bg-light);
+      --ok-fg: var(--ok-fg-light);
+      --warn-bg: var(--warn-bg-light);
+      --warn-fg: var(--warn-fg-light);
+      --dup-bg: var(--dup-bg-light);
+      --dup-fg: var(--dup-fg-light);
+      --scroll-thumb: var(--scroll-thumb-light);
+      --scroll-track: var(--scroll-track-light);
+
+      color-scheme: light dark;
+      accent-color: var(--accent);
+      scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: var(--bg-dark);
+        --surface: var(--surface-dark);
+        --surface-alt: var(--surface-alt-dark);
+        --surface-elev: var(--surface-elev-dark);
+        --text: var(--text-dark);
+        --muted: var(--muted-dark);
+        --border: var(--border-dark);
+        --accent: var(--accent-dark);
+        --accent-strong: var(--accent-strong-dark);
+        --accent-soft: var(--accent-soft-dark);
+        --ok-bg: var(--ok-bg-dark);
+        --ok-fg: var(--ok-fg-dark);
+        --warn-bg: var(--warn-bg-dark);
+        --warn-fg: var(--warn-fg-dark);
+        --dup-bg: var(--dup-bg-dark);
+        --dup-fg: var(--dup-fg-dark);
+        --scroll-thumb: var(--scroll-thumb-dark);
+        --scroll-track: var(--scroll-track-dark);
+      }
+    }
+
+    :root:has(> head > meta[name="color-scheme"][content="dark"]) {
+      color-scheme: dark;
+      --bg: var(--bg-dark);
+      --surface: var(--surface-dark);
+      --surface-alt: var(--surface-alt-dark);
+      --surface-elev: var(--surface-elev-dark);
+      --text: var(--text-dark);
+      --muted: var(--muted-dark);
+      --border: var(--border-dark);
+      --accent: var(--accent-dark);
+      --accent-strong: var(--accent-strong-dark);
+      --accent-soft: var(--accent-soft-dark);
+      --ok-bg: var(--ok-bg-dark);
+      --ok-fg: var(--ok-fg-dark);
+      --warn-bg: var(--warn-bg-dark);
+      --warn-fg: var(--warn-fg-dark);
+      --dup-bg: var(--dup-bg-dark);
+      --dup-fg: var(--dup-fg-dark);
+      --scroll-thumb: var(--scroll-thumb-dark);
+      --scroll-track: var(--scroll-track-dark);
+    }
+
+    :root:has(> head > meta[name="color-scheme"][content="light"]) {
+      color-scheme: light;
+      --bg: var(--bg-light);
+      --surface: var(--surface-light);
+      --surface-alt: var(--surface-alt-light);
+      --surface-elev: var(--surface-elev-light);
+      --text: var(--text-light);
+      --muted: var(--muted-light);
+      --border: var(--border-light);
+      --accent: var(--accent-light);
+      --accent-strong: var(--accent-strong-light);
+      --accent-soft: var(--accent-soft-light);
+      --ok-bg: var(--ok-bg-light);
+      --ok-fg: var(--ok-fg-light);
+      --warn-bg: var(--warn-bg-light);
+      --warn-fg: var(--warn-fg-light);
+      --dup-bg: var(--dup-bg-light);
+      --dup-fg: var(--dup-fg-light);
+      --scroll-thumb: var(--scroll-thumb-light);
+      --scroll-track: var(--scroll-track-light);
+    }
+
+    @supports (color: light-dark(white, black)) {
+      :root {
+        --bg: light-dark(var(--bg-light), var(--bg-dark));
+        --surface: light-dark(var(--surface-light), var(--surface-dark));
+        --surface-alt: light-dark(var(--surface-alt-light), var(--surface-alt-dark));
+        --surface-elev: light-dark(var(--surface-elev-light), var(--surface-elev-dark));
+        --text: light-dark(var(--text-light), var(--text-dark));
+        --muted: light-dark(var(--muted-light), var(--muted-dark));
+        --border: light-dark(var(--border-light), var(--border-dark));
+        --accent: light-dark(var(--accent-light), var(--accent-dark));
+        --accent-strong: light-dark(var(--accent-strong-light), var(--accent-strong-dark));
+        --accent-soft: light-dark(var(--accent-soft-light), var(--accent-soft-dark));
+        --ok-bg: light-dark(var(--ok-bg-light), var(--ok-bg-dark));
+        --ok-fg: light-dark(var(--ok-fg-light), var(--ok-fg-dark));
+        --warn-bg: light-dark(var(--warn-bg-light), var(--warn-bg-dark));
+        --warn-fg: light-dark(var(--warn-fg-light), var(--warn-fg-dark));
+        --dup-bg: light-dark(var(--dup-bg-light), var(--dup-bg-dark));
+        --dup-fg: light-dark(var(--dup-fg-light), var(--dup-fg-dark));
+        --scroll-thumb: light-dark(var(--scroll-thumb-light), var(--scroll-thumb-dark));
+        --scroll-track: light-dark(var(--scroll-track-light), var(--scroll-track-dark));
+      }
+    }
+
+    @supports not (scrollbar-color: auto) {
+      ::-webkit-scrollbar { width: 10px; height: 10px; }
+      ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 5px; }
+      ::-webkit-scrollbar-track { background: var(--scroll-track); }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    a:hover { text-decoration: underline; }
+
+    :focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .container {
+      max-inline-size: 1380px;
+      margin-inline: auto;
+      padding: 1.25rem 1.15rem 3.5rem;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-block-end: 1rem;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-block-top: 0.55rem;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 0.22rem 0.62rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+    }
+
+    .hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 1.25rem 1.35rem;
+      margin-block-end: 1rem;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(1.32rem, 2.4vw, 1.78rem);
+      letter-spacing: -0.015em;
+    }
+
+    .hero p {
+      margin: 0.4rem 0 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+      max-inline-size: 92ch;
+    }
+
+    .controls-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 1.2rem 1.35rem;
+      margin-block-end: 1rem;
+    }
+
+    .preset-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      margin-block-end: 1rem;
+    }
+
+    .preset-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-inline-end: 0.25rem;
+    }
+
+    button {
+      font: inherit;
+      border-radius: 0.58rem;
+      border: 1px solid var(--border);
+      padding: 0.48rem 0.85rem;
+      background: var(--surface-alt);
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.86rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: background-color 0.14s ease, border-color 0.14s ease;
+    }
+
+    button:hover {
+      background: var(--surface-elev);
+    }
+
+    button.preset-btn[aria-pressed="true"] {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    button.btn-primary {
+      background: var(--accent-strong);
+      color: #ffffff;
+      border-color: var(--accent-strong);
+      padding: 0.58rem 1.05rem;
+      font-size: 0.9rem;
+    }
+
+    button.btn-primary:hover {
+      filter: brightness(1.08);
+    }
+
+    button.btn-success {
+      background: var(--ok-bg);
+      color: var(--ok-fg);
+      border-color: color-mix(in srgb, var(--ok-fg) 40%, transparent);
+      padding: 0.58rem 1rem;
+      font-size: 0.9rem;
+    }
+
+    button.btn-code {
+      background: var(--surface-alt);
+      color: var(--accent);
+      border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+      padding: 0.58rem 1rem;
+      font-size: 0.9rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.85rem;
+      margin-block-end: 0.95rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .field label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .field input,
+    .field select {
+      font: inherit;
+      font-size: 0.9rem;
+      padding: 0.5rem 0.7rem;
+      border-radius: 0.55rem;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .toggles-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
+      gap: 0.65rem;
+      padding: 0.8rem;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      margin-block-end: 1rem;
+    }
+
+    .toggle-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.55rem;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .toggle-item input[type="checkbox"] {
+      inline-size: 1.1rem;
+      block-size: 1.1rem;
+      margin-block-start: 0.14rem;
+      flex: none;
+      cursor: pointer;
+      accent-color: var(--accent);
+    }
+
+    .toggle-item strong {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    .toggle-item span {
+      display: block;
+      font-size: 0.76rem;
+      color: var(--muted);
+    }
+
+    .action-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+    }
+
+    .status-banner {
+      font-size: 0.83rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .pulse-dot {
+      inline-size: 0.58rem;
+      block-size: 0.58rem;
+      border-radius: 50%;
+      background: var(--ok-fg);
+      display: inline-block;
+    }
+
+    .progress-wrap {
+      margin-block-top: 0.85rem;
+      display: none;
+    }
+
+    .progress-wrap.active {
+      display: block;
+    }
+
+    .progress-track {
+      inline-size: 100%;
+      block-size: 0.48rem;
+      background: var(--surface-alt);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .progress-fill {
+      block-size: 100%;
+      inline-size: 0%;
+      background: var(--accent);
+      transition: inline-size 0.18s ease;
+    }
+
+    .progress-step {
+      font-size: 0.79rem;
+      color: var(--muted);
+      margin-block-top: 0.32rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+      gap: 0.75rem;
+      margin-block-end: 1rem;
+    }
+
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.85rem;
+      padding: 0.85rem 1rem;
+    }
+
+    .kpi-label {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .kpi-val {
+      font-size: 1.38rem;
+      font-weight: 800;
+      margin-block-top: 0.2rem;
+      color: var(--text);
+    }
+
+    .kpi-sub {
+      font-size: 0.76rem;
+      color: var(--muted);
+      margin-block-top: 0.15rem;
+    }
+
+    /* Accessible Scrolling Tablist (Modern Web Guidance: tabs) */
+    .tabs-shell {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      overflow: hidden;
+    }
+
+    .tablist {
+      display: flex;
+      overflow-x: auto;
+      border-block-end: 1px solid var(--border);
+      background: var(--surface-alt);
+      padding-inline: 0.5rem;
+      scroll-snap-type: inline proximity;
+    }
+
+    .tablist [role="tab"] {
+      flex: none;
+      scroll-snap-align: start;
+      position: relative;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      padding: 0.82rem 1.05rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .tablist [role="tab"]:hover {
+      color: var(--text);
+      background: color-mix(in srgb, var(--surface-elev) 55%, transparent);
+    }
+
+    .tablist [role="tab"][aria-selected="true"] {
+      color: var(--accent);
+    }
+
+    .tablist [role="tab"][aria-selected="true"]::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      border-block-end: 3px solid var(--accent);
+    }
+
+    .panel-inner {
+      padding: 1.15rem 1.25rem;
+    }
+
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      justify-content: space-between;
+      align-items: center;
+      margin-block-end: 0.85rem;
+    }
+
+    .filter-bar input[type="search"] {
+      font: inherit;
+      font-size: 0.86rem;
+      padding: 0.45rem 0.75rem;
+      border-radius: 0.55rem;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      min-inline-size: min(320px, 100%);
+    }
+
+    .filter-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .chip-btn {
+      font-size: 0.78rem;
+      padding: 0.34rem 0.68rem;
+      border-radius: 999px;
+    }
+
+    .chip-btn[aria-pressed="true"] {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    /* Responsive Sticky & Container-Query Data Table (Modern Web Guidance: responsive-table) */
+    .table-wrapper {
+      overflow: auto;
+      max-inline-size: 100%;
+      max-block-size: min(580px, 74vh);
+      container-type: inline-size;
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      background: var(--surface);
+    }
+
+    table.data-table {
+      inline-size: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.82rem;
+      --label-2: "Category";
+      --label-3: "Phone";
+      --label-4: "Physical Address";
+      --label-5: "Website";
+      --label-6: "Email";
+      --label-7: "Social Links";
+      --label-8: "Rating & Reviews";
+      --label-9: "Opening Hours";
+      --label-10: "Dedup Status";
+    }
+
+    table.data-table caption {
+      text-align: start;
+      padding: 0.65rem 0.9rem;
+      font-weight: 700;
+      font-size: 0.84rem;
+      color: var(--muted);
+      background: var(--surface-alt);
+      border-block-end: 1px solid var(--border);
+    }
+
+    table.data-table thead {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 3;
+    }
+
+    table.data-table thead th {
+      background: var(--surface-alt);
+      color: var(--text);
+      font-weight: 700;
+      text-align: start;
+      padding: 0.65rem 0.75rem;
+      border-block-end: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    table.data-table thead th:first-child {
+      position: sticky;
+      inset-inline-start: 0;
+      z-index: 4;
+      background: var(--surface-alt);
+      border-inline-end: 1px solid var(--border);
+    }
+
+    table.data-table tbody th,
+    table.data-table tbody td {
+      padding: 0.62rem 0.75rem;
+      border-block-end: 1px solid var(--border);
+      vertical-align: top;
+      text-align: start;
+    }
+
+    table.data-table tbody th {
+      position: sticky;
+      inset-inline-start: 0;
+      z-index: 1;
+      background: var(--surface);
+      border-inline-end: 1px solid var(--border);
+      font-weight: 700;
+      min-inline-size: 205px;
+    }
+
+    table.data-table tbody tr:hover th,
+    table.data-table tbody tr:hover td {
+      background: var(--surface-alt);
+    }
+
+    table.data-table tbody tr.is-dup th,
+    table.data-table tbody tr.is-dup td {
+      background: color-mix(in srgb, var(--dup-bg) 35%, var(--surface));
+    }
+
+    .src-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      margin-block-top: 0.25rem;
+    }
+
+    .src-tag {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.1rem 0.4rem;
+      border-radius: 0.3rem;
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .social-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.28rem;
+      min-inline-size: 130px;
+    }
+
+    .soc-pill {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.12rem 0.42rem;
+      border-radius: 0.32rem;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    }
+
+    .status-badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.16rem 0.5rem;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .status-merged { background: var(--ok-bg); color: var(--ok-fg); }
+    .status-unique { background: var(--accent-soft); color: var(--accent); }
+    .status-dup { background: var(--dup-bg); color: var(--dup-fg); }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.79rem;
+    }
+
+    .nowrap { white-space: nowrap; }
+
+    @container (width < 680px) {
+      table.data-table,
+      table.data-table thead,
+      table.data-table tbody,
+      table.data-table tr,
+      table.data-table th,
+      table.data-table td {
+        display: block;
+      }
+
+      table.data-table thead {
+        display: none;
+      }
+
+      table.data-table tbody tr {
+        margin: 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 0.65rem;
+        overflow: hidden;
+      }
+
+      table.data-table tbody th {
+        position: sticky;
+        inset-block-start: 0;
+        z-index: 2;
+        background: var(--surface-alt);
+        border-inline-end: none;
+      }
+
+      table.data-table tbody td::before {
+        font-weight: 700;
+        color: var(--muted);
+        display: inline-block;
+        min-inline-size: 128px;
+      }
+
+      table.data-table tbody td:nth-child(2)::before { content: var(--label-2) ": "; }
+      table.data-table tbody td:nth-child(3)::before { content: var(--label-3) ": "; }
+      table.data-table tbody td:nth-child(4)::before { content: var(--label-4) ": "; }
+      table.data-table tbody td:nth-child(5)::before { content: var(--label-5) ": "; }
+      table.data-table tbody td:nth-child(6)::before { content: var(--label-6) ": "; }
+      table.data-table tbody td:nth-child(7)::before { content: var(--label-7) ": "; }
+      table.data-table tbody td:nth-child(8)::before { content: var(--label-8) ": "; }
+      table.data-table tbody td:nth-child(9)::before { content: var(--label-9) ": "; }
+      table.data-table tbody td:nth-child(10)::before { content: var(--label-10) ": "; }
+    }
+
+    .split-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1rem;
+    }
+
+    .log-box,
+    .code-box {
+      background: #090d16;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      border-radius: 0.75rem;
+      padding: 0.95rem 1.05rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.79rem;
+      line-height: 1.55;
+      overflow: auto;
+      max-block-size: 460px;
+      white-space: pre;
+      color-scheme: dark;
+    }
+
+    .merge-card {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 0.9rem 1rem;
+      margin-block-end: 0.75rem;
+      font-size: 0.84rem;
+    }
+
+    .merge-card h4 {
+      margin: 0 0 0.35rem;
+      font-size: 0.9rem;
+    }
+
+    .doc-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 0.75rem;
+      margin-block-end: 1rem;
+    }
+
+    .doc-step {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 0.85rem 0.95rem;
+      font-size: 0.84rem;
+    }
+
+    .doc-step strong {
+      display: block;
+      margin-block-end: 0.25rem;
+      color: var(--text);
+    }
+
+    .toast {
+      position: fixed;
+      inset-block-end: 1.25rem;
+      inset-inline-end: 1.25rem;
+      background: var(--surface);
+      color: var(--text);
+      border: 2px solid var(--accent);
+      border-radius: 0.7rem;
+      padding: 0.65rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      box-shadow: 0 10px 28px rgb(0 0 0 / 0.28);
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <div class="topbar">
+      <p style="margin:0;"><a href="/demos/">← Back to All Live Engineering Demos</a></p>
+      <button id="themeBtn" type="button">🌓 Toggle Light / Dark</button>
+    </div>
+
+    <section class="hero" aria-labelledby="page-title">
+      <h1 id="page-title">🗺️ Multi-Source Business Contact &amp; Google Maps Scraper Workbench</h1>
+      <p>Interactive B2B lead &amp; directory extraction prototype engineered for clean, de-duplicated CSV/Excel delivery: merges <strong>Google Maps Places</strong> + <strong>Online Business Directories (YellowPages, BBB, Yelp)</strong> + <strong>Website <code>/contact</code> Enrichment</strong> with polite anti-blocking controls, <code>robots.txt</code> compliance, sample-first review gate, and a downloadable re-runnable Python Scrapy + Playwright spider.</p>
+      <div class="badge-row">
+        <span class="pill">✓ Name · Phone · Physical Address</span>
+        <span class="pill">✓ Website · Verified Email · Social Links (IN/FB/IG/X)</span>
+        <span class="pill">✓ Category · Star Ratings · Opening Hours</span>
+        <span class="pill">✓ E.164 Phone &amp; Domain Dedup</span>
+        <span class="pill">✓ Sample-First Review + Rerun Scripts</span>
+      </div>
+    </section>
+
+    <section class="controls-card" aria-label="Extraction Pipeline Configuration">
+      <div class="preset-bar" role="group" aria-label="Sample target presets">
+        <span class="preset-label">Quick Sample Targets:</span>
+        <button type="button" class="preset-btn" data-preset="dental" aria-pressed="true">🦷 Dental Clinics in Austin, TX</button>
+        <button type="button" class="preset-btn" data-preset="hvac" aria-pressed="false">❄️ HVAC Contractors in Miami, FL</button>
+        <button type="button" class="preset-btn" data-preset="coffee" aria-pressed="false">☕ Specialty Coffee Roasters in Seattle, WA</button>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="queryInput">Target Business Niche / Category</label>
+          <input id="queryInput" type="text" value="Dental Clinics" placeholder="e.g., Dental Clinics, Commercial Roofers, CPA Firms">
+        </div>
+        <div class="field">
+          <label for="cityInput">Target City / Region</label>
+          <input id="cityInput" type="text" value="Austin, TX" placeholder="e.g., Austin, TX or Chicago, IL">
+        </div>
+        <div class="field">
+          <label for="jitterSelect">Rate-Limit &amp; Anti-Block Jitter</label>
+          <select id="jitterSelect">
+            <option value="1.5–3.8s Polite AutoThrottle (Recommended)" selected>1.5s – 3.8s Polite AutoThrottle (Recommended)</option>
+            <option value="0.8–1.9s Balanced Concurrent (CONCURRENCY=4)">0.8s – 1.9s Balanced Concurrent (4x)</option>
+            <option value="3.2–6.5s High-Stealth Conservative">3.2s – 6.5s High-Stealth Conservative</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="proxySelect">Proxy Rotation &amp; Workflow Stage</label>
+          <select id="proxySelect">
+            <option value="Residential Sticky Pool · Sample Gate (First 15–20 Rows)" selected>Residential Sticky · Sample Approval Gate</option>
+            <option value="Rotating Geo-Matched Pool · Full Batch Run">Rotating Geo-Matched · Full Approved Run</option>
+            <option value="Direct Polite Session · Public JSON-LD Only">Direct Polite Session · Public JSON-LD</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="toggles-row">
+        <label class="toggle-item" for="robotsToggle">
+          <input id="robotsToggle" type="checkbox" checked>
+          <div>
+            <strong>Respect <code>robots.txt</code> &amp; Crawl-Delay</strong>
+            <span>Enforces <code>ROBOTSTXT_OBEY = True</code> &amp; skips disallowed internal search paths</span>
+          </div>
+        </label>
+
+        <label class="toggle-item" for="enrichToggle">
+          <input id="enrichToggle" type="checkbox" checked>
+          <div>
+            <strong>Email &amp; Social Media Enrichment</strong>
+            <span>Follows business website <code>/</code>, <code>/contact</code> &amp; <code>/about</code> for verified emails + LinkedIn/FB/IG/X</span>
+          </div>
+        </label>
+
+        <label class="toggle-item" for="dedupToggle">
+          <input id="dedupToggle" type="checkbox" checked>
+          <div>
+            <strong>Phone (E.164) &amp; Root-Domain Deduplication</strong>
+            <span>Merges Google Maps + Directory duplicates into 1 golden record (uncheck to inspect raw rows)</span>
+          </div>
+        </label>
+      </div>
+
+      <div class="action-bar">
+        <div class="action-buttons">
+          <button id="runBtn" type="button" class="btn-primary">▶ Run Multi-Source Sample Scrape</button>
+          <button id="csvBtn" type="button" class="btn-success">⬇ Download Clean CSV (Excel UTF-8)</button>
+          <button id="tsvBtn" type="button">⬇ Download Excel TSV (.tsv)</button>
+          <button id="pyBtn" type="button" class="btn-code">🐍 Download Python Scrapy Spider (.py)</button>
+        </div>
+        <div class="status-banner" id="statusBanner" aria-live="polite">
+          <span class="pulse-dot" aria-hidden="true"></span>
+          <span id="statusText">Sample ready: 16 clean records (3 cross-source duplicates merged)</span>
+        </div>
+      </div>
+
+      <div class="progress-wrap" id="progressWrap" aria-hidden="true">
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-step" id="progressStep">Initializing Scrapy + Playwright pipeline...</div>
+      </div>
+    </section>
+
+    <section class="kpi-grid" aria-label="Live Extraction and Deduplication Metrics">
+      <div class="kpi-card">
+        <div class="kpi-label">Raw Multi-Source Rows</div>
+        <div class="kpi-val" id="kpiRaw">19</div>
+        <div class="kpi-sub" id="kpiRawSub">Google Maps: 12 · Directories: 7</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Cross-Source Dedup</div>
+        <div class="kpi-val" id="kpiDedup">3 Merged</div>
+        <div class="kpi-sub" id="kpiDedupSub">Matched via E.164 Phone + Domain</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Clean Deliverable Rows</div>
+        <div class="kpi-val" id="kpiClean">16</div>
+        <div class="kpi-sub" id="kpiCleanSub">100% schema-validated for Excel</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Email &amp; Social Hit Rate</div>
+        <div class="kpi-val" id="kpiEmail">93.8%</div>
+        <div class="kpi-sub" id="kpiEmailSub">15/16 emails · 16/16 social links</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Anti-Blocking &amp; Compliance</div>
+        <div class="kpi-val" id="kpiHealth">0 Blocks</div>
+        <div class="kpi-sub" id="kpiHealthSub">robots.txt: ON · HTTP 200 OK</div>
+      </div>
+    </section>
+
+    <section class="tabs-shell">
+      <div class="tablist" role="tablist" aria-label="Scraper Output Views">
+        <button type="button" role="tab" id="tab-preview" aria-selected="true" tabindex="0">📊 Sample Dataset Preview (<span id="tabCount">16</span> Rows)</button>
+        <button type="button" role="tab" id="tab-dedup" aria-selected="false" tabindex="-1">🛡️ Anti-Blocking Log &amp; Cross-Source Merge Proof</button>
+        <button type="button" role="tab" id="tab-spider" aria-selected="false" tabindex="-1">🐍 Python Scrapy + Playwright Spider &amp; Rerun Docs</button>
+      </div>
+
+      <div role="tabpanel" id="panel-preview" aria-labelledby="tab-preview">
+        <div class="panel-inner">
+          <div class="filter-bar">
+            <input id="searchBox" type="search" placeholder="Filter sample by name, email, street, category, or social..." aria-label="Filter sample records">
+            <div class="filter-chips" role="group" aria-label="Row filter">
+              <button type="button" class="chip-btn" data-filter="all" aria-pressed="true">All Rows</button>
+              <button type="button" class="chip-btn" data-filter="merged" aria-pressed="false">Cross-Merged (2+ Sources)</button>
+              <button type="button" class="chip-btn" data-filter="email" aria-pressed="false">Has Verified Email</button>
+              <button type="button" class="chip-btn" data-filter="toprated" aria-pressed="false">Rated 4.8★+</button>
+            </div>
+          </div>
+
+          <div tabindex="0" role="region" aria-labelledby="results-table-caption" class="table-wrapper">
+            <table class="data-table">
+              <caption id="results-table-caption">Extracted Business Contact Sample — Ready for Client Approval Before Full Run</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Business Name &amp; Sources</th>
+                  <th scope="col">Category</th>
+                  <th scope="col">Phone Number</th>
+                  <th scope="col">Physical Address</th>
+                  <th scope="col">Website</th>
+                  <th scope="col">Email Address</th>
+                  <th scope="col">Social Media Links</th>
+                  <th scope="col">Rating &amp; Reviews</th>
+                  <th scope="col">Opening Hours</th>
+                  <th scope="col">Dedup Status</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div role="tabpanel" id="panel-dedup" aria-labelledby="tab-dedup" hidden="until-found">
+        <div class="panel-inner">
+          <div class="split-grid">
+            <div>
+              <h3 style="margin-top:0;font-size:1.02rem;">Live Multi-Source Execution &amp; <code>robots.txt</code> Telemetry</h3>
+              <div class="log-box" id="logOutput" aria-live="polite"></div>
+            </div>
+            <div>
+              <h3 style="margin-top:0;font-size:1.02rem;">How Cross-Source Deduplication Enriches Data Quality</h3>
+              <p style="color:var(--muted);font-size:0.85rem;margin-top:0;">Instead of blindly dropping duplicate rows, our pipeline normalizes phone numbers to <strong>E.164</strong> and strips URL tracking/subdomains to the <strong>registrable root domain</strong>, merging complementary fields across Google Maps + Business Directories:</p>
+              <div id="mergeCards"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div role="tabpanel" id="panel-spider" aria-labelledby="tab-spider" hidden="until-found">
+        <div class="panel-inner">
+          <div class="doc-steps">
+            <div class="doc-step">
+              <strong>1. Two-Stage Sample → Full Workflow</strong>
+              Run with <code>-a sample_limit=20</code> first to generate your sample CSV/Excel preview. Once you approve column formatting &amp; accuracy, omit <code>sample_limit</code> for the full run.
+            </div>
+            <div class="doc-step">
+              <strong>2. Sensible Anti-Blocking &amp; <code>robots.txt</code></strong>
+              Uses Scrapy <code>ROBOTSTXT_OBEY=True</code>, <code>AutoThrottle</code> with randomized jitter, Playwright stealth context only for dynamic Maps panels, and automatic 429 backoff.
+            </div>
+            <div class="doc-step">
+              <strong>3. One-Command Local Rerun</strong>
+              <code class="mono">pip install scrapy scrapy-playwright phonenumbers tldextract openpyxl</code><br>
+              <code class="mono" id="cliPreviewCmd">scrapy runspider business_contact_spider.py -a query="Dental Clinics" -a location="Austin, TX" -O leads_clean.csv</code>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;flex-wrap:wrap;margin-bottom:0.6rem;">
+            <strong style="font-size:0.92rem;"><code>business_contact_spider.py</code> — Re-Runnable Multi-Source Spider + Dedup Pipeline</strong>
+            <div style="display:flex;gap:0.5rem;">
+              <button id="copyCodeBtn" type="button">📋 Copy Python Script</button>
+              <button id="pyBtn2" type="button" class="btn-code">⬇ Download .py File</button>
+            </div>
+          </div>
+          <div class="code-box" id="pythonCodeBox"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    // 1. Modern Web Guidance: Dark mode toggle (persist only explicit overrides; remove when matching system)
+    const metaScheme = document.querySelector('meta[name="color-scheme"]');
+    document.getElementById("themeBtn").addEventListener("click", () => {
+      const sysDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const cur = metaScheme.content;
+      const isDark = cur === "dark" || (cur !== "light" && sysDark);
+      const target = isDark ? "light" : "dark";
+      if (target === (sysDark ? "dark" : "light")) {
+        try { localStorage.removeItem("color-scheme"); } catch {}
+        metaScheme.content = "light dark";
+      } else {
+        try { localStorage.setItem("color-scheme", target); } catch {}
+        metaScheme.content = target;
+      }
+    });
+    window.addEventListener("storage", (ev) => {
+      if (ev.key === "color-scheme") metaScheme.content = ev.newValue ?? "light dark";
+    });
+
+    // 2. Rich Multi-Source Sample Datasets (19 raw records -> 16 clean deduplicated records per preset)
+    const PRESETS = {
+      dental: {
+        query: "Dental Clinics",
+        city: "Austin, TX",
+        rawRecords: [
+          { name: "Shoal Creek Dental Care", category: "Cosmetic & Family Dentist", phone: "+1 (512) 453-8181", e164: "+15124538181", address: "4106 Marathon Blvd, Suite 100, Austin, TX 78756", website: "https://shoalcreekdental.com", domain: "shoalcreekdental.com", email: "appointments@shoalcreekdental.com", socials: { linkedin: "linkedin.com/company/shoal-creek-dental", facebook: "facebook.com/shoalcreekdental", instagram: "instagram.com/shoalcreekdental" }, rating: 4.9, reviews: 412, hours: "Mon–Thu 07:30–17:00; Fri 08:00–14:00", source: "Google Maps" },
+          { name: "Shoal Creek Dental Care PLLC", category: "Dentists", phone: "(512) 453-8181", e164: "+15124538181", address: "4106 Marathon Blvd #100, Austin, TX 78756", website: "https://www.shoalcreekdental.com/contact", domain: "shoalcreekdental.com", email: "appointments@shoalcreekdental.com", socials: { facebook: "facebook.com/shoalcreekdental", x: "x.com/shoalcreekatx" }, rating: 4.8, reviews: 94, hours: "Mon–Thu 07:30–17:00", source: "YellowPages" },
+          { name: "South Congress Modern Dentistry", category: "General & Implant Dentist", phone: "+1 (512) 447-2990", e164: "+15124472990", address: "2420 S Congress Ave, Ste B, Austin, TX 78704", website: "https://socodentalatx.com", domain: "socodentalatx.com", email: "hello@socodentalatx.com", socials: { linkedin: "linkedin.com/company/soco-dental-atx", instagram: "instagram.com/socodentalatx", facebook: "facebook.com/socodentalatx" }, rating: 4.9, reviews: 538, hours: "Mon–Fri 08:00–18:00; Sat 09:00–14:00", source: "Google Maps" },
+          { name: "Barton Springs Smiles Studio", category: "Dental Clinic", phone: "+1 (512) 326-9014", e164: "+15123269014", address: "1512 Barton Springs Rd, Austin, TX 78704", website: "https://bartonspringssmiles.com", domain: "bartonspringssmiles.com", email: "care@bartonspringssmiles.com", socials: { instagram: "instagram.com/bartonspringssmiles", facebook: "facebook.com/bartonspringssmiles" }, rating: 4.8, reviews: 287, hours: "Mon–Fri 08:00–17:00", source: "Google Maps" },
+          { name: "Domain Northside Dental Arts", category: "Orthodontics & Dentistry", phone: "+1 (512) 835-6220", e164: "+15128356220", address: "11601 Rock Rose Ave, Ste 210, Austin, TX 78758", website: "https://domaindentalarts.com", domain: "domaindentalarts.com", email: "frontdesk@domaindentalarts.com", socials: { linkedin: "linkedin.com/company/domain-dental-arts", instagram: "instagram.com/domaindentalarts", x: "x.com/domaindental" }, rating: 4.9, reviews: 619, hours: "Mon–Fri 07:30–18:30; Sat 08:30–15:00", source: "Google Maps" },
+          { name: "Domain Dental Arts", category: "Cosmetic Dentists", phone: "512-835-6220", e164: "+15128356220", address: "11601 Rock Rose Ave, Austin, TX 78758", website: "http://domaindentalarts.com", domain: "domaindentalarts.com", email: "billing@domaindentalarts.com", socials: { linkedin: "linkedin.com/company/domain-dental-arts", facebook: "facebook.com/domaindentalarts" }, rating: 4.9, reviews: 142, hours: "Mon–Sat Open", source: "BBB Directory" },
+          { name: "Mueller Pediatric & Family Dental", category: "Pediatric Dentist", phone: "+1 (512) 928-4410", e164: "+15129284410", address: "1900 Aldrich St, Ste 140, Austin, TX 78723", website: "https://muellerfamilydental.com", domain: "muellerfamilydental.com", email: "smile@muellerfamilydental.com", socials: { facebook: "facebook.com/muellerfamilydental", instagram: "instagram.com/muellerdentalatx" }, rating: 5.0, reviews: 364, hours: "Mon–Fri 08:00–17:00; Sat 09:00–13:00", source: "Google Maps" },
+          { name: "Zilker Park Dental Loft", category: "Holistic Dentist", phone: "+1 (512) 472-5588", e164: "+15124725588", address: "1705 S Lamar Blvd, Ste 104, Austin, TX 78704", website: "https://zilkerdentalloft.com", domain: "zilkerdentalloft.com", email: "concierge@zilkerdentalloft.com", socials: { instagram: "instagram.com/zilkerdentalloft", linkedin: "linkedin.com/company/zilker-dental-loft" }, rating: 4.8, reviews: 229, hours: "Mon–Thu 08:00–17:00; Fri 08:00–13:00", source: "Google Maps" },
+          { name: "Westlake Hills Restorative Dentistry", category: "Prosthodontist", phone: "+1 (512) 327-7460", e164: "+15123277460", address: "3811 Bee Cave Rd, Ste 205, Austin, TX 78746", website: "https://westlakerestorative.com", domain: "westlakerestorative.com", email: "info@westlakerestorative.com", socials: { linkedin: "linkedin.com/company/westlake-restorative", facebook: "facebook.com/westlakerestorative" }, rating: 4.9, reviews: 198, hours: "Mon–Thu 08:00–16:30", source: "Google Maps" },
+          { name: "East Cesar Chavez Dental Co.", category: "Dental Clinic", phone: "+1 (512) 524-1982", e164: "+15125241982", address: "2115 E Cesar Chavez St, Austin, TX 78702", website: "https://eastatxdental.com", domain: "eastatxdental.com", email: "hola@eastatxdental.com", socials: { instagram: "instagram.com/eastatxdental", facebook: "facebook.com/eastatxdental", x: "x.com/eastatxdental" }, rating: 4.9, reviews: 311, hours: "Tue–Fri 08:30–18:00; Sat 09:00–15:00", source: "Google Maps" },
+          { name: "Hyde Park Gentle Dentistry", category: "General Dentist", phone: "+1 (512) 459-7811", e164: "+15124597811", address: "4310 Duval St, Austin, TX 78751", website: "https://hydeparkgentledentistry.com", domain: "hydeparkgentledentistry.com", email: "office@hydeparkgentledentistry.com", socials: { facebook: "facebook.com/hydeparkgentledentistry" }, rating: 4.7, reviews: 176, hours: "Mon–Fri 08:00–17:00", source: "YellowPages" },
+          { name: "Arboretum Premier Dental Group", category: "Emergency Dental Service", phone: "+1 (512) 346-9292", e164: "+15123469292", address: "9722 Great Hills Trail, Ste 180, Austin, TX 78759", website: "https://arboretumdentalgroup.com", domain: "arboretumdentalgroup.com", email: "patientcare@arboretumdentalgroup.com", socials: { linkedin: "linkedin.com/company/arboretum-dental", facebook: "facebook.com/arboretumdentalatx", instagram: "instagram.com/arboretumdental" }, rating: 4.8, reviews: 445, hours: "Mon–Sat 07:00–19:00", source: "Google Maps" },
+          { name: "Arboretum Premier Dental", category: "Emergency Dentists", phone: "(512) 346-9292", e164: "+15123469292", address: "9722 Great Hills Trl #180, Austin, TX 78759", website: "https://arboretumdentalgroup.com", domain: "arboretumdentalgroup.com", email: "patientcare@arboretumdentalgroup.com", socials: { yelp: "yelp.com/biz/arboretum-premier-dental", instagram: "instagram.com/arboretumdental" }, rating: 4.7, reviews: 118, hours: "Mon–Sat 07:00–19:00", source: "Yelp Directory" },
+          { name: "Tarrytown Family & Implant Dental", category: "Dental Implants Periodontist", phone: "+1 (512) 478-3022", e164: "+15124783022", address: "2414 Exposition Blvd, Ste A-1, Austin, TX 78703", website: "https://tarrytowndentalatx.com", domain: "tarrytowndentalatx.com", email: "dr.chen@tarrytowndentalatx.com", socials: { linkedin: "linkedin.com/company/tarrytown-dental", instagram: "instagram.com/tarrytowndental" }, rating: 4.9, reviews: 254, hours: "Mon–Thu 07:30–16:30; Fri 08:00–12:00", source: "Google Maps" },
+          { name: "Burnet Road Bright Smiles", category: "Dental Clinic", phone: "+1 (512) 451-6030", e164: "+15124516030", address: "5700 Burnet Rd, Ste 102, Austin, TX 78756", website: "https://burnetbrightsmiles.com", domain: "burnetbrightsmiles.com", email: "hello@burnetbrightsmiles.com", socials: { facebook: "facebook.com/burnetbrightsmiles", instagram: "instagram.com/burnetbrightsmiles" }, rating: 4.6, reviews: 149, hours: "Mon–Fri 08:30–17:30", source: "YellowPages" },
+          { name: "Lakeway Laser & Cosmetic Dentistry", category: "Cosmetic Dentist", phone: "+1 (512) 263-1840", e164: "+15122631840", address: "2300 Lohmans Spur, Ste 125, Austin, TX 78734", website: "https://lakewaylaserdental.com", domain: "lakewaylaserdental.com", email: "info@lakewaylaserdental.com", socials: { linkedin: "linkedin.com/company/lakeway-laser-dental", instagram: "instagram.com/lakewaylaserdental" }, rating: 4.9, reviews: 302, hours: "Mon–Thu 08:00–17:00", source: "Google Maps" },
+          { name: "Crestview Neighborhood Dental", category: "General Dentist", phone: "+1 (512) 467-2109", e164: "+15124672109", address: "7109 Woodrow Ave, Austin, TX 78757", website: "https://crestviewdentalatx.com", domain: "crestviewdentalatx.com", email: "", socials: { facebook: "facebook.com/crestviewdentalatx" }, rating: 4.7, reviews: 121, hours: "Mon–Thu 08:00–17:00; Fri 08:00–14:00", source: "BBB Directory" },
+          { name: "Slaughter Lane Complete Dental", category: "Family & Emergency Dentist", phone: "+1 (512) 282-9950", e164: "+15122829950", address: "1807 W Slaughter Ln, Ste 300, Austin, TX 78748", website: "https://slaughterdental.com", domain: "slaughterdental.com", email: "appointments@slaughterdental.com", socials: { facebook: "facebook.com/slaughterdental", instagram: "instagram.com/slaughterdentalatx", x: "x.com/slaughterdental" }, rating: 4.8, reviews: 389, hours: "Mon–Fri 07:30–18:00; Sat 08:00–14:00", source: "Google Maps" },
+          { name: "Downtown Congress Dental Studio", category: "Cosmetic Dentist", phone: "+1 (512) 476-8833", e164: "+15124768833", address: "600 Congress Ave, Ste 160, Austin, TX 78701", website: "https://congressdentalstudio.com", domain: "congressdentalstudio.com", email: "concierge@congressdentalstudio.com", socials: { linkedin: "linkedin.com/company/congress-dental-studio", instagram: "instagram.com/congressdentalstudio" }, rating: 4.9, reviews: 472, hours: "Mon–Fri 07:30–17:30", source: "Google Maps" }
+        ]
+      },
+      hvac: {
+        query: "HVAC Contractors",
+        city: "Miami, FL",
+        rawRecords: [
+          { name: "Biscayne Breeze Air Conditioning", category: "HVAC Contractor", phone: "+1 (305) 576-4410", e164: "+13055764410", address: "2815 NW 2nd Ave, Miami, FL 33127", website: "https://biscaynebreezeac.com", domain: "biscaynebreezeac.com", email: "dispatch@biscaynebreezeac.com", socials: { linkedin: "linkedin.com/company/biscayne-breeze-ac", facebook: "facebook.com/biscaynebreezeac", instagram: "instagram.com/biscaynebreezeac" }, rating: 4.9, reviews: 642, hours: "Open 24 Hours (Mon–Sun)", source: "Google Maps" },
+          { name: "Biscayne Breeze AC & Mechanical LLC", category: "Air Conditioning Repair", phone: "(305) 576-4410", e164: "+13055764410", address: "2815 NW 2nd Ave, Wynwood, Miami, FL 33127", website: "https://www.biscaynebreezeac.com", domain: "biscaynebreezeac.com", email: "estimates@biscaynebreezeac.com", socials: { facebook: "facebook.com/biscaynebreezeac", x: "x.com/biscayneac" }, rating: 4.9, reviews: 185, hours: "Mon–Sun 00:00–23:59", source: "BBB Directory" },
+          { name: "Coral Gables CoolTech Mechanical", category: "Commercial & Residential HVAC", phone: "+1 (305) 448-9022", e164: "+13054489022", address: "380 Palermo Ave, Coral Gables, FL 33134", website: "https://coralgablescooltech.com", domain: "coralgablescooltech.com", email: "service@coralgablescooltech.com", socials: { linkedin: "linkedin.com/company/cooltech-miami", instagram: "instagram.com/cooltechmiami" }, rating: 4.8, reviews: 419, hours: "Mon–Sat 07:00–20:00", source: "Google Maps" },
+          { name: "Brickell Climate Control Pros", category: "Air Conditioning Contractor", phone: "+1 (305) 371-6180", e164: "+13053716180", address: "1200 Brickell Ave, Ste 340, Miami, FL 33131", website: "https://brickellclimatepros.com", domain: "brickellclimatepros.com", email: "support@brickellclimatepros.com", socials: { facebook: "facebook.com/brickellclimatepros", instagram: "instagram.com/brickellclimate" }, rating: 4.9, reviews: 312, hours: "Mon–Sun 07:00–22:00", source: "Google Maps" },
+          { name: "Doral Precision Air & Ducts", category: "HVAC & Air Duct Cleaning", phone: "+1 (305) 592-7745", e164: "+13055927745", address: "8400 NW 36th St, Ste 110, Doral, FL 33166", website: "https://doralprecisionair.com", domain: "doralprecisionair.com", email: "info@doralprecisionair.com", socials: { linkedin: "linkedin.com/company/doral-precision-air", facebook: "facebook.com/doralprecisionair", instagram: "instagram.com/doralprecisionair" }, rating: 4.8, reviews: 508, hours: "Mon–Sat 07:30–19:00", source: "Google Maps" },
+          { name: "Doral Precision Air Inc", category: "Heating & Cooling", phone: "305-592-7745", e164: "+13055927745", address: "8400 NW 36th St, Doral, FL 33166", website: "https://doralprecisionair.com/contact", domain: "doralprecisionair.com", email: "info@doralprecisionair.com", socials: { facebook: "facebook.com/doralprecisionair" }, rating: 4.7, reviews: 96, hours: "Mon–Sat 07:30–19:00", source: "YellowPages" },
+          { name: "Coconut Grove Arctic Air", category: "HVAC Contractor", phone: "+1 (305) 442-1198", e164: "+13054421198", address: "3120 Commodore Plaza, Miami, FL 33133", website: "https://grovercticair.com", domain: "grovercticair.com", email: "dispatch@grovercticair.com", socials: { instagram: "instagram.com/grovearcticair", facebook: "facebook.com/grovearcticair" }, rating: 4.9, reviews: 274, hours: "Mon–Fri 07:30–18:30; Sat 08:00–16:00", source: "Google Maps" },
+          { name: "Kendall TropiCool Air Systems", category: "AC Installation & Repair", phone: "+1 (305) 279-3304", e164: "+13052793304", address: "10720 SW 88th St, Miami, FL 33176", website: "https://tropicoolmiami.com", domain: "tropicoolmiami.com", email: "service@tropicoolmiami.com", socials: { facebook: "facebook.com/tropicoolmiami", instagram: "instagram.com/tropicoolmiami", x: "x.com/tropicool305" }, rating: 4.8, reviews: 731, hours: "Open 24 Hours (Mon–Sun)", source: "Google Maps" },
+          { name: "Little Havana Refrigeracion & AC", category: "Bilingual HVAC Specialist", phone: "+1 (305) 643-8821", e164: "+13056438821", address: "1642 SW 8th St, Miami, FL 33135", website: "https://havanacooling.com", domain: "havanacooling.com", email: "ventas@havanacooling.com", socials: { facebook: "facebook.com/havanacooling", instagram: "instagram.com/havanacooling305" }, rating: 4.7, reviews: 215, hours: "Mon–Sat 08:00–19:00", source: "YellowPages" },
+          { name: "Aventura Chiller & Marine HVAC", category: "Commercial Chiller & HVAC", phone: "+1 (305) 931-5090", e164: "+13059315090", address: "19495 Biscayne Blvd, Ste 402, Aventura, FL 33180", website: "https://aventurachillerhvac.com", domain: "aventurachillerhvac.com", email: "commercial@aventurachillerhvac.com", socials: { linkedin: "linkedin.com/company/aventura-chiller-hvac" }, rating: 4.9, reviews: 164, hours: "Mon–Fri 07:00–18:00", source: "Google Maps" },
+          { name: "Miami Beach Salt-Shield HVAC", category: "Coastal Corrosion-Safe AC", phone: "+1 (305) 672-4900", e164: "+13056724900", address: "1680 Michigan Ave, Ste 700, Miami Beach, FL 33139", website: "https://saltshieldhvac.com", domain: "saltshieldhvac.com", email: "hello@saltshieldhvac.com", socials: { instagram: "instagram.com/saltshieldhvac", linkedin: "linkedin.com/company/saltshield-hvac" }, rating: 4.9, reviews: 288, hours: "Mon–Sat 08:00–19:00", source: "Google Maps" },
+          { name: "Salt-Shield HVAC Miami Beach", category: "Air Conditioning Contractors", phone: "(305) 672-4900", e164: "+13056724900", address: "1680 Michigan Ave, Miami Beach, FL 33139", website: "https://saltshieldhvac.com", domain: "saltshieldhvac.com", email: "hello@saltshieldhvac.com", socials: { facebook: "facebook.com/saltshieldhvac" }, rating: 4.8, reviews: 87, hours: "Mon–Sat 08:00–19:00", source: "Yelp Directory" },
+          { name: "Hialeah Industrial Air Solutions", category: "Commercial HVAC", phone: "+1 (305) 885-3490", e164: "+13058853490", address: "4410 E 10th Ct, Hialeah, FL 33013", website: "https://hialeahindustrialair.com", domain: "hialeahindustrialair.com", email: "ops@hialeahindustrialair.com", socials: { linkedin: "linkedin.com/company/hialeah-industrial-air", facebook: "facebook.com/hialeahindustrialair" }, rating: 4.8, reviews: 193, hours: "Mon–Fri 06:30–17:30; Sat 07:00–13:00", source: "Google Maps" },
+          { name: "Pinecrest EcoSmart Cooling", category: "Heat Pump & Solar HVAC", phone: "+1 (305) 238-6612", e164: "+13052386612", address: "11925 S Dixie Hwy, Pinecrest, FL 33156", website: "https://pinecrestecosmart.com", domain: "pinecrestecosmart.com", email: "rebates@pinecrestecosmart.com", socials: { instagram: "instagram.com/pinecrestecosmart", facebook: "facebook.com/pinecrestecosmart" }, rating: 5.0, reviews: 247, hours: "Mon–Sat 08:00–18:00", source: "Google Maps" },
+          { name: "Midtown 305 Express AC Repair", category: "Emergency AC Service", phone: "+1 (305) 573-0911", e164: "+13055730911", address: "3401 N Miami Ave, Ste 212, Miami, FL 33127", website: "https://305expressac.com", domain: "305expressac.com", email: "urgent@305expressac.com", socials: { instagram: "instagram.com/305expressac", x: "x.com/305expressac" }, rating: 4.7, reviews: 356, hours: "Open 24 Hours (Mon–Sun)", source: "Google Maps" },
+          { name: "Key Biscayne Island Air Care", category: "Residential HVAC", phone: "+1 (305) 361-7204", e164: "+13053617204", address: "260 Crandon Blvd, Ste 32, Key Biscayne, FL 33149", website: "https://islandaircarefl.com", domain: "islandaircarefl.com", email: "", socials: { facebook: "facebook.com/islandaircarefl" }, rating: 4.8, reviews: 112, hours: "Mon–Fri 08:00–17:00", source: "BBB Directory" },
+          { name: "Tamiami Trail Comfort Air", category: "HVAC Contractor", phone: "+1 (305) 221-9840", e164: "+13052219840", address: "12850 SW 8th St, Miami, FL 33184", website: "https://tamiamiair.com", domain: "tamiamiair.com", email: "office@tamiamiair.com", socials: { facebook: "facebook.com/tamiamiair", instagram: "instagram.com/tamiamiair" }, rating: 4.6, reviews: 178, hours: "Mon–Sat 07:30–18:30", source: "YellowPages" },
+          { name: "Edgewater High-Rise Mechanical", category: "Condo WSHP & HVAC Specialist", phone: "+1 (305) 400-8315", e164: "+13054008315", address: "2100 Biscayne Blvd, Ste 204, Miami, FL 33137", website: "https://edgewatermechanical.com", domain: "edgewatermechanical.com", email: "hoa@edgewatermechanical.com", socials: { linkedin: "linkedin.com/company/edgewater-mechanical", instagram: "instagram.com/edgewaterhvac" }, rating: 4.9, reviews: 229, hours: "Mon–Fri 07:30–18:00; Sat 09:00–14:00", source: "Google Maps" },
+          { name: "Sunny Isles Polar Air Tech", category: "Air Conditioning Service", phone: "+1 (305) 947-5120", e164: "+13059475120", address: "17100 Collins Ave, Ste 209, Sunny Isles Beach, FL 33160", website: "https://polarairmiami.com", domain: "polarairmiami.com", email: "book@polarairmiami.com", socials: { facebook: "facebook.com/polarairmiami", instagram: "instagram.com/polarairmiami" }, rating: 4.8, reviews: 261, hours: "Mon–Sun 08:00–20:00", source: "Google Maps" }
+        ]
+      },
+      coffee: {
+        query: "Specialty Coffee Roasters",
+        city: "Seattle, WA",
+        rawRecords: [
+          { name: "Capitol Hill Micro-Roastery", category: "Coffee Roasters & Cafe", phone: "+1 (206) 324-7180", e164: "+12063247180", address: "1422 E Pike St, Seattle, WA 98122", website: "https://capitolhillroasters.com", domain: "capitolhillroasters.com", email: "wholesale@capitolhillroasters.com", socials: { instagram: "instagram.com/capitolhillroasters", linkedin: "linkedin.com/company/capitol-hill-roasters", facebook: "facebook.com/capitolhillroasters" }, rating: 4.9, reviews: 814, hours: "Mon–Sun 06:30–18:00", source: "Google Maps" },
+          { name: "Capitol Hill Micro-Roastery LLC", category: "Wholesale Coffee", phone: "(206) 324-7180", e164: "+12063247180", address: "1422 East Pike St, Seattle, WA 98122", website: "https://www.capitolhillroasters.com", domain: "capitolhillroasters.com", email: "roastery@capitolhillroasters.com", socials: { instagram: "instagram.com/capitolhillroasters", x: "x.com/caphillroast" }, rating: 4.8, reviews: 310, hours: "Daily 06:30–18:00", source: "Yelp Directory" },
+          { name: "Ballard Dockside Coffee Lab", category: "Specialty Coffee Roaster", phone: "+1 (206) 782-4490", e164: "+12067824490", address: "5310 Ballard Ave NW, Seattle, WA 98107", website: "https://ballardcoffeelab.com", domain: "ballardcoffeelab.com", email: "hello@ballardcoffeelab.com", socials: { instagram: "instagram.com/ballardcoffeelab", facebook: "facebook.com/ballardcoffeelab" }, rating: 4.9, reviews: 592, hours: "Mon–Fri 07:00–17:00; Sat–Sun 07:30–18:00", source: "Google Maps" },
+          { name: "Fremont Ship Canal Roasters", category: "Direct-Trade Coffee Roaster", phone: "+1 (206) 632-8805", e164: "+12066328805", address: "3508 Fremont Pl N, Seattle, WA 98103", website: "https://shipcanalroasters.com", domain: "shipcanalroasters.com", email: "beans@shipcanalroasters.com", socials: { linkedin: "linkedin.com/company/ship-canal-roasters", instagram: "instagram.com/shipcanalroasters", x: "x.com/shipcanalcoffee" }, rating: 4.8, reviews: 467, hours: "Mon–Sun 07:00–17:30", source: "Google Maps" },
+          { name: "Georgetown Steamplant Coffee Co.", category: "Wholesale Coffee Roastery", phone: "+1 (206) 763-1920", e164: "+12067631920", address: "5814 Airport Way S, Seattle, WA 98108", website: "https://steamplantcoffee.com", domain: "steamplantcoffee.com", email: "orders@steamplantcoffee.com", socials: { linkedin: "linkedin.com/company/steamplant-coffee", instagram: "instagram.com/steamplantcoffee" }, rating: 4.9, reviews: 338, hours: "Mon–Fri 06:00–16:00; Sat 08:00–15:00", source: "Google Maps" },
+          { name: "Georgetown Steamplant Coffee", category: "Coffee & Tea Wholesale", phone: "206-763-1920", e164: "+12067631920", address: "5814 Airport Way S, Seattle, WA 98108", website: "https://steamplantcoffee.com", domain: "steamplantcoffee.com", email: "orders@steamplantcoffee.com", socials: { facebook: "facebook.com/steamplantcoffee" }, rating: 4.9, reviews: 79, hours: "Mon–Sat Open", source: "YellowPages" },
+          { name: "Queen Anne Cloudbreak Espresso", category: "Espresso Bar & Roaster", phone: "+1 (206) 284-5512", e164: "+12062845512", address: "2124 Queen Anne Ave N, Seattle, WA 98109", website: "https://cloudbreakespresso.com", domain: "cloudbreakespresso.com", email: "cafe@cloudbreakespresso.com", socials: { instagram: "instagram.com/cloudbreakespresso", facebook: "facebook.com/cloudbreakespresso" }, rating: 4.8, reviews: 411, hours: "Mon–Sun 06:30–17:00", source: "Google Maps" },
+          { name: "SoDo Roasterworks & Cupping Room", category: "B2B Coffee Roaster", phone: "+1 (206) 467-2910", e164: "+12064672910", address: "2914 1st Ave S, Seattle, WA 98134", website: "https://sodoroasterworks.com", domain: "sodoroasterworks.com", email: "partners@sodoroasterworks.com", socials: { linkedin: "linkedin.com/company/sodo-roasterworks", instagram: "instagram.com/sodoroasterworks" }, rating: 5.0, reviews: 218, hours: "Mon–Fri 07:00–16:30", source: "Google Maps" },
+          { name: "Pioneer Square Heritage Roast", category: "Coffee Roasters", phone: "+1 (206) 623-7741", e164: "+12066237741", address: "114 S Washington St, Seattle, WA 98104", website: "https://heritageroastsea.com", domain: "heritageroastsea.com", email: "info@heritageroastsea.com", socials: { instagram: "instagram.com/heritageroastsea", facebook: "facebook.com/heritageroastsea" }, rating: 4.7, reviews: 529, hours: "Mon–Sat 07:00–18:00; Sun 08:00–16:00", source: "Google Maps" },
+          { name: "Wallingford Single-Origin Collective", category: "Organic Coffee Roaster", phone: "+1 (206) 547-3090", e164: "+12065473090", address: "1815 N 45th St, Seattle, WA 98103", website: "https://wallingfordcoffee.co", domain: "wallingfordcoffee.co", email: "team@wallingfordcoffee.co", socials: { instagram: "instagram.com/wallingfordcoffeeco", x: "x.com/wallingfordroast" }, rating: 4.9, reviews: 376, hours: "Mon–Sun 07:00–17:00", source: "Google Maps" },
+          { name: "West Seattle Alki Roast House", category: "Coffee Shop & Roaster", phone: "+1 (206) 935-6140", e164: "+12069356140", address: "4520 California Ave SW, Seattle, WA 98116", website: "https://alkiroasthouse.com", domain: "alkiroasthouse.com", email: "aloha@alkiroasthouse.com", socials: { instagram: "instagram.com/alkiroasthouse", facebook: "facebook.com/alkiroasthouse" }, rating: 4.8, reviews: 448, hours: "Mon–Sun 06:30–17:30", source: "Google Maps" },
+          { name: "Alki Roast House", category: "Coffee & Espresso", phone: "(206) 935-6140", e164: "+12069356140", address: "4520 California Ave SW, Seattle, WA 98116", website: "https://alkiroasthouse.com", domain: "alkiroasthouse.com", email: "aloha@alkiroasthouse.com", socials: { linkedin: "linkedin.com/company/alki-roast-house", instagram: "instagram.com/alkiroasthouse" }, rating: 4.8, reviews: 204, hours: "Mon–Sun 06:30–17:30", source: "Yelp Directory" },
+          { name: "Belltown Nordic Light Roasters", category: "Scandinavian Style Roaster", phone: "+1 (206) 441-9280", e164: "+12064419280", address: "2218 2nd Ave, Seattle, WA 98121", website: "https://nordiclightcoffee.com", domain: "nordiclightcoffee.com", email: "hej@nordiclightcoffee.com", socials: { instagram: "instagram.com/nordiclightcoffee", linkedin: "linkedin.com/company/nordic-light-coffee" }, rating: 4.9, reviews: 389, hours: "Mon–Fri 07:00–16:00; Sat–Sun 08:00–16:00", source: "Google Maps" },
+          { name: "Columbia City Hearthside Coffee", category: "Small-Batch Roaster", phone: "+1 (206) 722-4815", e164: "+12067224815", address: "4864 Rainier Ave S, Seattle, WA 98118", website: "https://hearthsidecoffee.com", domain: "hearthsidecoffee.com", email: "roast@hearthsidecoffee.com", socials: { facebook: "facebook.com/hearthsidecoffee", instagram: "instagram.com/hearthsidecoffee" }, rating: 4.9, reviews: 294, hours: "Tue–Sun 07:00–16:00", source: "Google Maps" },
+          { name: "Green Lake Timberline Roasters", category: "Coffee Roasters", phone: "+1 (206) 524-1178", e164: "+12065241178", address: "7204 Woodlawn Ave NE, Seattle, WA 98115", website: "https://timberlineroasters.com", domain: "timberlineroasters.com", email: "", socials: { instagram: "instagram.com/timberlineroasters" }, rating: 4.7, reviews: 187, hours: "Mon–Sun 07:00–17:00", source: "BBB Directory" },
+          { name: "South Lake Union Pour & Roast", category: "Office Coffee & Roastery", phone: "+1 (206) 682-3390", e164: "+12066823390", address: "410 Terry Ave N, Seattle, WA 98109", website: "https://slupourandroast.com", domain: "slupourandroast.com", email: "officecoffee@slupourandroast.com", socials: { linkedin: "linkedin.com/company/slu-pour-roast", instagram: "instagram.com/slupourandroast", x: "x.com/sluroast" }, rating: 4.8, reviews: 315, hours: "Mon–Fri 06:30–17:00", source: "Google Maps" },
+          { name: "Beacon Hill Rainshadow Coffee", category: "Fair-Trade Roaster", phone: "+1 (206) 329-6044", e164: "+12063296044", address: "2524 Beacon Ave S, Seattle, WA 98144", website: "https://rainshadowcoffee.com", domain: "rainshadowcoffee.com", email: "hello@rainshadowcoffee.com", socials: { instagram: "instagram.com/rainshadowcoffee", facebook: "facebook.com/rainshadowcoffee" }, rating: 4.9, reviews: 263, hours: "Wed–Sun 07:30–16:00", source: "YellowPages" },
+          { name: "University District Kiln Roasters", category: "Specialty Coffee", phone: "+1 (206) 527-8410", e164: "+12065278410", address: "4542 University Way NE, Seattle, WA 98105", website: "https://kilnroasters.com", domain: "kilnroasters.com", email: "info@kilnroasters.com", socials: { instagram: "instagram.com/kilnroasters", x: "x.com/kilnroasters" }, rating: 4.7, reviews: 342, hours: "Mon–Sun 07:00–20:00", source: "Google Maps" },
+          { name: "Madison Park Soundview Roastery", category: "Artisan Coffee Roaster", phone: "+1 (206) 325-9902", e164: "+12063259902", address: "4118 E Madison St, Seattle, WA 98112", website: "https://soundviewroastery.com", domain: "soundviewroastery.com", email: "concierge@soundviewroastery.com", socials: { linkedin: "linkedin.com/company/soundview-roastery", instagram: "instagram.com/soundviewroastery" }, rating: 4.9, reviews: 198, hours: "Mon–Sun 07:00–16:30", source: "Google Maps" }
+        ]
+      }
+    };
+
+    // Custom Niche + City generator so ANY client query works live!
+    function buildCustomDataset(query, city) {
+      const cleanQuery = (query || "Local Businesses").trim();
+      const cleanCity = (city || "Chicago, IL").trim();
+      const cityShort = cleanCity.split(",")[0].trim() || "Metro";
+      const prefixes = ["Premier", "Metro", "Summit", "Heritage", "Oakwood", "Bayside", "Midtown", "Apex", "Northstar", "Crestline", "Vanguard", "Harborview", "Parkside", "ironworks", "BlueRidge", "CivicCenter"];
+      const streets = ["Main St", "Oak Ave", "Commerce Blvd", "Market St", "Washington Ave", "Highland Dr", "Broadway", "Parkway N", "Franklin St", "Cedar Ln", "grand Ave", " Monroe St", "Madison Ave", "Union St", "river Rd", "Central Ave"];
+      const sources = ["Google Maps", "Google Maps", "YellowPages", "Google Maps", "BBB Directory", "Google Maps", "Yelp Directory"];
+      const hoursPool = [
+        "Mon–Fri 08:00–18:00; Sat 09:00–14:00",
+        "Mon–Fri 07:30–17:30",
+        "Mon–Sat 08:00–19:00",
+        "Mon–Thu 08:00–17:00; Fri 08:00–15:00",
+        "Open 24 Hours (Mon–Sun)"
+      ];
+
+      let hash = 0;
+      const seedStr = cleanQuery + "|" + cleanCity;
+      for (let i = 0; i < seedStr.length; i++) hash = ((hash << 5) - hash + seedStr.charCodeAt(i)) | 0;
+      const areaCode = 210 + (Math.abs(hash) % 680);
+
+      const singularCat = cleanQuery.replace(/s$/i, "") || "Business Specialist";
+      const rows = [];
+
+      for (let i = 0; i < 16; i++) {
+        const pfx = prefixes[i % prefixes.length].replace(/^./, c => c.toUpperCase());
+        const bizName = `${cityShort} ${pfx} ${singularCat}`;
+        const slug = `${cityShort}${pfx}`.toLowerCase().replace(/[^a-z0-9]/g, "");
+        const domain = `${slug}.com`;
+        const lineNum = 1100 + ((Math.abs(hash) + i * 373) % 8800);
+        const midNum = 210 + ((i * 47) % 760);
+        const e164 = `+1${areaCode}${midNum}${lineNum}`;
+        const phone = `+1 (${areaCode}) ${midNum}-${lineNum}`;
+        const stNum = 120 + i * 215;
+        const street = streets[i % streets.length].replace(/^./, c => c.toUpperCase());
+        const zip = 10010 + ((Math.abs(hash) + i * 19) % 88000);
+        const rating = Number((4.6 + ((i * 7) % 5) * 0.1).toFixed(1));
+        const reviews = 85 + ((i * 67 + Math.abs(hash)) % 490);
+        const email = i === 13 ? "" : `contact@${domain}`;
+        const socials = {
+          linkedin: `linkedin.com/company/${slug}`,
+          facebook: `facebook.com/${slug}`
+        };
+        if (i % 2 === 0) socials.instagram = `instagram.com/${slug}`;
+        if (i % 4 === 0) socials.x = `x.com/${slug}`;
+
+        const rec = {
+          name: bizName,
+          category: singularCat,
+          phone,
+          e164,
+          address: `${stNum} ${street}, Ste ${100 + i * 10}, ${cleanCity} ${zip}`,
+          website: `https://${domain}`,
+          domain,
+          email,
+          socials,
+          rating: Math.min(5.0, rating),
+          reviews,
+          hours: hoursPool[i % hoursPool.length],
+          source: sources[i % sources.length]
+        };
+        rows.push(rec);
+
+        // Inject 3 realistic cross-directory duplicates (indices 0, 3, 9)
+        if (i === 0 || i === 3 || i === 9) {
+          rows.push({
+            name: `${bizName} LLC`,
+            category: cleanQuery,
+            phone: `(${areaCode}) ${midNum}-${lineNum}`,
+            e164,
+            address: `${stNum} ${street}, ${cleanCity} ${zip}`,
+            website: `https://www.${domain}/contact`,
+            domain,
+            email: `info@${domain}`,
+            socials: { facebook: `facebook.com/${slug}`, instagram: `instagram.com/${slug}` },
+            rating: Number(Math.max(4.5, rec.rating - 0.1).toFixed(1)),
+            reviews: Math.max(24, Math.floor(reviews * 0.28)),
+            hours: rec.hours.split(";")[0],
+            source: i === 0 ? "YellowPages" : (i === 3 ? "BBB Directory" : "Yelp Directory")
+          });
+        }
+      }
+      return { query: cleanQuery, city: cleanCity, rawRecords: rows };
+    }
+
+    // 3. Deduplication & Enrichment Pipeline Engine
+    let activePresetKey = "dental";
+    let activeRowFilter = "all";
+    let currentProcessedRows = [];
+    let currentMergeExamples = [];
+
+    function processPipeline(dataset) {
+      const obeyRobots = document.getElementById("robotsToggle").checked;
+      const doEnrich = document.getElementById("enrichToggle").checked;
+      const doDedup = document.getElementById("dedupToggle").checked;
+
+      const seenMap = new Map();
+      const output = [];
+      const merges = [];
+      let mergedCount = 0;
+
+      for (const raw of dataset.rawRecords) {
+        const key = `${raw.e164}|${raw.domain}`;
+        const emailVal = doEnrich ? raw.email : (raw.source === "BBB Directory" ? raw.email : "");
+        const socialsVal = doEnrich ? { ...raw.socials } : (raw.socials.facebook ? { facebook: raw.socials.facebook } : {});
+
+        if (doDedup) {
+          if (!seenMap.has(key)) {
+            const clone = {
+              ...raw,
+              email: emailVal,
+              socials: socialsVal,
+              sources: [raw.source],
+              dedupStatus: "Unique",
+              isDupRow: false
+            };
+            seenMap.set(key, clone);
+            output.push(clone);
+          } else {
+            const existing = seenMap.get(key);
+            mergedCount++;
+            if (!existing.sources.includes(raw.source)) existing.sources.push(raw.source);
+            const prevEmail = existing.email;
+            if (!existing.email && emailVal) existing.email = emailVal;
+            const addedSocials = [];
+            for (const [k, v] of Object.entries(socialsVal)) {
+              if (!existing.socials[k]) {
+                existing.socials[k] = v;
+                addedSocials.push(k.toUpperCase());
+              }
+            }
+            if (raw.hours.length > existing.hours.length) existing.hours = raw.hours;
+            existing.dedupStatus = `Merged (${existing.sources.length} Sources)`;
+            merges.push({
+              name: existing.name,
+              duplicateName: raw.name,
+              key: `${raw.e164} · ${raw.domain}`,
+              sources: existing.sources.join(" + "),
+              detail: `Combined primary ${existing.sources[0]} listing (${existing.rating}★, ${existing.reviews} reviews, full hours) with ${raw.source} contact data${addedSocials.length ? " (+" + addedSocials.join(", ") + ")" : ""}${!prevEmail && emailVal ? " (+Verified Email)" : ""}.`
+            });
+          }
+        } else {
+          const isDup = seenMap.has(key);
+          if (isDup) mergedCount++;
+          seenMap.set(key, true);
+          output.push({
+            ...raw,
+            email: emailVal,
+            socials: socialsVal,
+            sources: [raw.source],
+            dedupStatus: isDup ? "Duplicate Flagged" : "Raw Unmerged",
+            isDupRow: isDup
+          });
+        }
+      }
+
+      return {
+        rows: output,
+        rawTotal: dataset.rawRecords.length,
+        mergedCount,
+        merges,
+        obeyRobots,
+        doEnrich,
+        doDedup
+      };
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function getActiveDataset() {
+      const q = document.getElementById("queryInput").value.trim();
+      const c = document.getElementById("cityInput").value.trim();
+      for (const [key, preset] of Object.entries(PRESETS)) {
+        if (preset.query.toLowerCase() === q.toLowerCase() && preset.city.toLowerCase() === c.toLowerCase()) {
+          activePresetKey = key;
+          return preset;
+        }
+      }
+      activePresetKey = "custom";
+      return buildCustomDataset(q, c);
+    }
+
+    function renderWorkbench() {
+      const dataset = getActiveDataset();
+      document.querySelectorAll(".preset-btn").forEach(btn => {
+        btn.setAttribute("aria-pressed", String(btn.dataset.preset === activePresetKey));
+      });
+
+      const res = processPipeline(dataset);
+      currentProcessedRows = res.rows;
+      currentMergeExamples = res.merges;
+
+      // Update KPIs
+      const gmapsCount = dataset.rawRecords.filter(r => r.source === "Google Maps").length;
+      const dirCount = dataset.rawRecords.length - gmapsCount;
+      document.getElementById("kpiRaw").textContent = String(res.rawTotal);
+      document.getElementById("kpiRawSub").textContent = `Google Maps: ${gmapsCount} · Directories: ${dirCount}`;
+
+      if (res.doDedup) {
+        document.getElementById("kpiDedup").textContent = `${res.mergedCount} Merged`;
+        document.getElementById("kpiDedupSub").textContent = "Matched via E.164 Phone + Domain";
+      } else {
+        document.getElementById("kpiDedup").textContent = `${res.mergedCount} Unmerged`;
+        document.getElementById("kpiDedupSub").textContent = "Dedup OFF (Duplicates highlighted)";
+      }
+
+      document.getElementById("kpiClean").textContent = String(res.rows.length);
+      document.getElementById("kpiCleanSub").textContent = res.doDedup ? "100% de-duplicated golden records" : "Includes raw duplicate listings";
+
+      const withEmail = res.rows.filter(r => Boolean(r.email)).length;
+      const withSocial = res.rows.filter(r => Object.keys(r.socials || {}).length > 0).length;
+      const emailPct = res.rows.length ? ((withEmail / res.rows.length) * 100).toFixed(1) : "0.0";
+      document.getElementById("kpiEmail").textContent = `${emailPct}%`;
+      document.getElementById("kpiEmailSub").textContent = `${withEmail}/${res.rows.length} emails · ${withSocial}/${res.rows.length} social sets`;
+
+      document.getElementById("kpiHealth").textContent = "0 Blocks";
+      document.getElementById("kpiHealthSub").textContent = `robots.txt: ${res.obeyRobots ? "STRICT" : "BYPASS"} · HTTP 200 OK`;
+
+      document.getElementById("statusText").textContent = res.doDedup
+        ? `Sample ready (${dataset.query} — ${dataset.city}): ${res.rows.length} clean records (${res.mergedCount} cross-source duplicates merged)`
+        : `Raw view (${dataset.query} — ${dataset.city}): ${res.rows.length} unmerged rows (${res.mergedCount} duplicates flagged)`;
+
+      renderTableRows();
+      renderLogsAndMerges(dataset, res);
+      renderPythonCode(dataset, res);
+    }
+
+    function renderTableRows() {
+      const searchVal = document.getElementById("searchBox").value.trim().toLowerCase();
+      const filtered = currentProcessedRows.filter(r => {
+        if (activeRowFilter === "merged" && r.sources.length < 2) return false;
+        if (activeRowFilter === "email" && !r.email) return false;
+        if (activeRowFilter === "toprated" && r.rating < 4.8) return false;
+        if (!searchVal) return true;
+        const hay = `${r.name} ${r.category} ${r.phone} ${r.address} ${r.website} ${r.email} ${Object.values(r.socials).join(" ")}`.toLowerCase();
+        return hay.includes(searchVal);
+      });
+
+      document.getElementById("tabCount").textContent = String(filtered.length);
+      const tbody = document.getElementById("tableBody");
+
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:1.6rem;color:var(--muted);">No sample records match the current filter. Clear search or switch filter chip above.</td></tr>`;
+        return;
+      }
+
+      const socialLabels = { linkedin: "IN", facebook: "FB", instagram: "IG", x: "X", yelp: "Yelp" };
+
+      tbody.innerHTML = filtered.map(r => {
+        const srcHtml = r.sources.map(s => `<span class="src-tag">${escapeHtml(s)}</span>`).join("");
+        const socEntries = Object.entries(r.socials || {});
+        const socHtml = socEntries.length
+          ? `<div class="social-list">${socEntries.map(([k, url]) => `<a class="soc-pill" href="https://${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(url)}">${escapeHtml(socialLabels[k] || k.toUpperCase())}</a>`).join("")}</div>`
+          : `<span style="color:var(--muted);">—</span>`;
+
+        const emailHtml = r.email
+          ? `<a class="mono" href="mailto:${escapeHtml(r.email)}">${escapeHtml(r.email)}</a>`
+          : `<span style="color:var(--muted);font-size:0.76rem;">None on public site</span>`;
+
+        let badgeClass = "status-unique";
+        if (r.sources.length > 1) badgeClass = "status-merged";
+        if (r.isDupRow) badgeClass = "status-dup";
+
+        return `<tr class="${r.isDupRow ? "is-dup" : ""}">
+          <th scope="row">
+            <div>${escapeHtml(r.name)}</div>
+            <div class="src-badges">${srcHtml}</div>
+          </th>
+          <td>${escapeHtml(r.category)}</td>
+          <td class="mono nowrap">${escapeHtml(r.phone)}</td>
+          <td>${escapeHtml(r.address)}</td>
+          <td class="mono"><a href="${escapeHtml(r.website)}" target="_blank" rel="noopener noreferrer">${escapeHtml(r.domain)}</a></td>
+          <td>${emailHtml}</td>
+          <td>${socHtml}</td>
+          <td class="nowrap"><strong>★ ${r.rating.toFixed(1)}</strong> <span style="color:var(--muted);">(${r.reviews})</span></td>
+          <td>${escapeHtml(r.hours)}</td>
+          <td><span class="status-badge ${badgeClass}">${escapeHtml(r.dedupStatus)}</span></td>
+        </tr>`;
+      }).join("");
+    }
+
+    function renderLogsAndMerges(dataset, res) {
+      const jitter = document.getElementById("jitterSelect").value;
+      const proxy = document.getElementById("proxySelect").value;
+      const nowIso = new Date().toISOString().slice(11, 19);
+
+      const lines = [
+        `[${nowIso}] INFO  [scrapy.crawler] Target="${dataset.query}" Location="${dataset.city}"`,
+        `[${nowIso}] INFO  [antiblock.config] RateJitter="${jitter}" | Proxy="${proxy}"`,
+        res.obeyRobots
+          ? `[${nowIso}] INFO  [robotstxt] ROBOTSTXT_OBEY=True -> Checked robots.txt on directory & business domains (skipped /search/internal, allowed public LocalBusiness JSON-LD)`
+          : `[${nowIso}] WARN  [robotstxt] ROBOTSTXT_OBEY=False -> Manual override active (recommend True for production runs)`,
+        `[${nowIso}] INFO  [spider.gmaps] Captured ${dataset.rawRecords.filter(r => r.source === "Google Maps").length} Google Maps Places cards (name, phone, street, rating, reviews, hours, website)`,
+        `[${nowIso}] INFO  [spider.directories] Captured ${dataset.rawRecords.filter(r => r.source !== "Google Maps").length} YellowPages / BBB / Yelp schema.org LocalBusiness listings`,
+        res.doEnrich
+          ? `[${nowIso}] INFO  [spider.enrichment] Async HTTP/2 website crawl (/, /contact, /about): verified ${res.rows.filter(r => r.email).length} emails + ${res.rows.reduce((a, b) => a + Object.keys(b.socials).length, 0)} social profile links`
+          : `[${nowIso}] INFO  [spider.enrichment] Website /contact enrichment skipped (toggle OFF)`,
+        res.doDedup
+          ? `[${nowIso}] INFO  [pipeline.dedup] Normalized E.164 phone + registrable domain -> Merged ${res.mergedCount} cross-source duplicates into ${res.rows.length} clean golden rows`
+          : `[${nowIso}] WARN  [pipeline.dedup] Deduplication disabled -> Exporting ${res.rows.length} raw rows (${res.mergedCount} duplicates flagged)`,
+        `[${nowIso}] INFO  [export.ready] Sample gate passed: UTF-8-SIG CSV & TSV ready for client inspection.`
+      ];
+      document.getElementById("logOutput").textContent = lines.join("\n");
+
+      const mergeContainer = document.getElementById("mergeCards");
+      if (!res.doDedup) {
+        mergeContainer.innerHTML = `<div class="merge-card"><h4>Deduplication Currently Toggled OFF</h4><p style="margin:0;color:var(--muted);">Re-enable <strong>Phone (E.164) &amp; Root-Domain Deduplication</strong> above to merge the ${res.mergedCount} duplicate directory listings back into golden records.</p></div>`;
+      } else {
+        mergeContainer.innerHTML = res.merges.map(m => `
+          <div class="merge-card">
+            <h4>🔗 ${escapeHtml(m.name)} <span style="color:var(--ok-fg);font-size:0.78rem;">(${escapeHtml(m.sources)})</span></h4>
+            <div class="mono" style="color:var(--accent);margin-bottom:0.25rem;">Match Key: ${escapeHtml(m.key)}</div>
+            <div style="color:var(--muted);">${escapeHtml(m.detail)}</div>
+          </div>
+        `).join("");
+      }
+    }
+
+    function buildSpiderPythonSource(dataset, res) {
+      const qSafe = dataset.query.replace(/"/g, '\\"');
+      const cSafe = dataset.city.replace(/"/g, '\\"');
+      const obeyPy = res.obeyRobots ? "True" : "False";
+
+      return `#!/usr/bin/env python3
+"""
+Multi-Source Business Contact & Google Maps Scraper (Scrapy + Playwright)
+Deliverable for clean, de-duplicated CSV / Excel B2B contact extraction.
+
+Features:
+  1. Extracts Business Name, Phone, Physical Address, Website, Email, Social Links,
+     Category, Star Ratings + Review Count, and Opening Hours.
+  2. Combines Google Maps listings + Online Business Directories (JSON-LD LocalBusiness)
+     + Polite secondary website (/contact, /about) enrichment for verified emails & socials.
+  3. Built-in E.164 Phone + Registrable Root-Domain Deduplication Pipeline that MERGES
+     complementary fields across sources instead of dropping partial records.
+  4. Anti-blocking: ROBOTSTXT_OBEY, AutoThrottle + randomized jitter, rotating UA/Proxy support,
+     and a '-a sample_limit=20' flag to generate the initial client review sample safely.
+
+Quick Start:
+  pip install scrapy scrapy-playwright phonenumbers tldextract openpyxl
+  playwright install chromium
+  scrapy runspider business_contact_spider.py -a query="${qSafe}" -a location="${cSafe}" -a sample_limit=20 -O sample_preview.csv
+"""
+
+from __future__ import annotations
+
+import json
+import re
+from urllib.parse import quote_plus, urljoin
+
+import phonenumbers
+import scrapy
+import tldextract
+from itemadapter import ItemAdapter
+from scrapy.exceptions import DropItem
+
+EMAIL_RE = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,12}")
+IGNORE_EMAIL_SUFFIXES = (".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif", ".css", ".js", "sentry.io", "example.com")
+SOCIAL_PATTERNS = {
+    "linkedin": re.compile(r"https?://(?:www\\.)?linkedin\\.com/(?:company|in)/[a-zA-Z0-9_-]+", re.I),
+    "facebook": re.compile(r"https?://(?:www\\.)?facebook\\.com/(?!sharer|share)[a-zA-Z0-9._-]+", re.I),
+    "instagram": re.compile(r"https?://(?:www\\.)?instagram\\.com/[a-zA-Z0-9._]+", re.I),
+    "x": re.compile(r"https?://(?:www\\.)?(?:x|twitter)\\.com/(?!intent|share)[a-zA-Z0-9_]+", re.I),
+}
+
+
+def normalize_e164(raw_phone: str, default_region: str = "US") -> str:
+    if not raw_phone:
+        return ""
+    try:
+        parsed = phonenumbers.parse(raw_phone, default_region)
+        if phonenumbers.is_valid_number(parsed):
+            return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
+    except phonenumbers.NumberParseException:
+        pass
+    return re.sub(r"\\D+", "", raw_phone)
+
+
+def registrable_domain(url: str) -> str:
+    if not url:
+        return ""
+    ext = tldextract.extract(url)
+    return f"{ext.domain}.{ext.suffix}".lower() if ext.domain and ext.suffix else ""
+
+
+class CrossSourceDeduplicationPipeline:
+    """Merges duplicate listings across Google Maps & Directories by E.164 Phone or Root Domain."""
+
+    def __init__(self) -> None:
+        self.records_by_key: dict[str, dict] = {}
+
+    def process_item(self, item: dict, spider: scrapy.Spider) -> dict:
+        adapter = ItemAdapter(item)
+        e164 = normalize_e164(adapter.get("phone", ""))
+        domain = registrable_domain(adapter.get("website", ""))
+        dedup_key = domain or e164 or f"{adapter.get('business_name', '').lower()}|{adapter.get('address', '').lower()[:24]}"
+
+        if dedup_key in self.records_by_key:
+            primary = self.records_by_key[dedup_key]
+            for field in ("email", "website", "opening_hours", "category", "linkedin", "facebook", "instagram", "x"):
+                if not primary.get(field) and adapter.get(field):
+                    primary[field] = adapter.get(field)
+            if adapter.get("source") and adapter.get("source") not in primary["sources"]:
+                primary["sources"] += f" + {adapter['source']}"
+            raise DropItem(f"Merged cross-source duplicate into golden record: {dedup_key}")
+
+        record = adapter.asdict()
+        record["phone_e164"] = e164
+        record["sources"] = record.pop("source", "Directory")
+        self.records_by_key[dedup_key] = record
+        return record
+
+
+class BusinessContactSpider(scrapy.Spider):
+    name = "business_contact_spider"
+
+    custom_settings = {
+        "ROBOTSTXT_OBEY": ${obeyPy},
+        "AUTOTHROTTLE_ENABLED": True,
+        "AUTOTHROTTLE_START_DELAY": 1.8,
+        "AUTOTHROTTLE_MAX_DELAY": 12.0,
+        "RANDOMIZE_DOWNLOAD_DELAY": True,
+        "CONCURRENT_REQUESTS_PER_DOMAIN": 2,
+        "FEED_EXPORT_ENCODING": "utf-8-sig",  # Opens cleanly in Microsoft Excel
+        "ITEM_PIPELINES": {
+            "__main__.CrossSourceDeduplicationPipeline": 300,
+        },
+        "DOWNLOAD_HANDLERS": {
+            "http": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+            "https": "scrapy_playwright.handler.ScrapyPlaywrightDownloadHandler",
+        },
+        "TWISTED_REACTOR": "twisted.internet.asyncioreactor.AsyncioSelectorReactor",
+    }
+
+    def __init__(self, query: str = "${qSafe}", location: str = "${cSafe}", sample_limit: int = 0, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.query = query
+        self.location = location
+        self.sample_limit = int(sample_limit)
+        self.emitted = 0
+
+    def start_requests(self):
+        q_enc = quote_plus(f"{self.query} in {self.location}")
+        # Source 1: Google Maps Places Feed (Playwright dynamic scroll)
+        yield scrapy.Request(
+            f"https://www.google.com/maps/search/{q_enc}",
+            meta={"playwright": True, "source_name": "Google Maps"},
+            callback=self.parse_google_maps,
+        )
+        # Source 2: YellowPages / Schema.org LocalBusiness Directory
+        yield scrapy.Request(
+            f"https://www.yellowpages.com/search?search_terms={quote_plus(self.query)}&geo_location_terms={quote_plus(self.location)}",
+            meta={"source_name": "YellowPages"},
+            callback=self.parse_directory_jsonld,
+        )
+
+    def parse_directory_jsonld(self, response: scrapy.http.Response):
+        """Extracts structured schema.org LocalBusiness records cleanly."""
+        for block in response.xpath('//script[@type="application/ld+json"]/text()').getall():
+            try:
+                payload = json.loads(block)
+            except json.JSONDecodeError:
+                continue
+            entries = payload if isinstance(payload, list) else [payload]
+            for entry in entries:
+                if entry.get("@type") not in ("LocalBusiness", "Dentist", "HVACBusiness", "CafeOrCoffeeShop", "Organization"):
+                    continue
+                if self.sample_limit and self.emitted >= self.sample_limit:
+                    return
+                addr = entry.get("address") or {}
+                agg = entry.get("aggregateRating") or {}
+                item = {
+                    "business_name": entry.get("name", "").strip(),
+                    "category": entry.get("@type", self.query),
+                    "phone": entry.get("telephone", ""),
+                    "address": ", ".join(filter(None, [
+                        addr.get("streetAddress"), addr.get("addressLocality"),
+                        addr.get("addressRegion"), addr.get("postalCode")
+                    ])),
+                    "website": entry.get("url", ""),
+                    "email": (entry.get("email") or "").replace("mailto:", ""),
+                    "rating": agg.get("ratingValue", ""),
+                    "review_count": agg.get("reviewCount", ""),
+                    "opening_hours": "; ".join(entry.get("openingHours", [])) if isinstance(entry.get("openingHours"), list) else entry.get("openingHours", ""),
+                    "linkedin": "", "facebook": "", "instagram": "", "x": "",
+                    "source": response.meta.get("source_name", "Directory"),
+                }
+                self.emitted += 1
+                if item["website"]:
+                    yield scrapy.Request(
+                        item["website"],
+                        callback=self.enrich_website_contacts,
+                        errback=lambda _: item,
+                        meta={"item": item, "dont_retry": True, "download_timeout": 12},
+                    )
+                else:
+                    yield item
+
+    def parse_google_maps(self, response: scrapy.http.Response):
+        """Parses rendered Google Maps listing cards and follows business websites for email/social enrichment."""
+        for card in response.css('div[role="article"]'):
+            if self.sample_limit and self.emitted >= self.sample_limit:
+                return
+            name = card.css("::attr(aria-label)").get("").strip()
+            website = card.css('a[data-value="Website"]::attr(href)').get("")
+            if not name:
+                continue
+            item = {
+                "business_name": name,
+                "category": self.query,
+                "phone": card.css("span.UsdlK::text").get(""),
+                "address": card.css("div.W4Efsd span:nth-child(2)::text").get(""),
+                "website": website,
+                "email": "",
+                "rating": card.css("span.MW4etd::text").get(""),
+                "review_count": card.css("span.UY7F9::text").get("").strip("()"),
+                "opening_hours": card.css("div.W4Efsd span[style]::text").get(""),
+                "linkedin": "", "facebook": "", "instagram": "", "x": "",
+                "source": "Google Maps",
+            }
+            self.emitted += 1
+            if website:
+                yield scrapy.Request(website, callback=self.enrich_website_contacts, meta={"item": item, "download_timeout": 12})
+            else:
+                yield item
+
+    def enrich_website_contacts(self, response: scrapy.http.Response):
+        """Extracts verified business emails + LinkedIn/Facebook/Instagram/X links from homepage & /contact."""
+        item = response.meta["item"]
+        body = response.text
+
+        emails = [
+            e for e in EMAIL_RE.findall(body)
+            if not e.lower().endswith(IGNORE_EMAIL_SUFFIXES)
+        ]
+        if emails and not item["email"]:
+            item["email"] = emails[0].lower()
+
+        for net, pattern in SOCIAL_PATTERNS.items():
+            match = pattern.search(body)
+            if match and not item[net]:
+                item[net] = match.group(0)
+
+        # Follow /contact page once if email is still missing
+        if not item["email"] and not response.meta.get("checked_contact"):
+            contact_href = response.xpath('//a[contains(translate(@href,"CONTACT","contact"),"contact")]/@href').get()
+            if contact_href:
+                yield scrapy.Request(
+                    urljoin(response.url, contact_href),
+                    callback=self.enrich_website_contacts,
+                    meta={"item": item, "checked_contact": True, "download_timeout": 10},
+                )
+                return
+        yield item
+`;
+    }
+
+    function renderPythonCode(dataset, res) {
+      const code = buildSpiderPythonSource(dataset, res);
+      document.getElementById("pythonCodeBox").textContent = code;
+      document.getElementById("cliPreviewCmd").textContent =
+        `scrapy runspider business_contact_spider.py -a query="${dataset.query}" -a location="${dataset.city}" -a sample_limit=20 -O sample_preview.csv`;
+    }
+
+    // 4. Real Working Exports: Clean CSV (UTF-8 BOM), Excel TSV, and Python Spider (.py)
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => t.classList.remove("show"), 2800);
+    }
+
+    function triggerDownload(filename, content, mime) {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    }
+
+    function buildTabularData(sep) {
+      const headers = [
+        "Business Name",
+        "Business Category",
+        "Phone Number",
+        "Phone (E.164)",
+        "Physical Address",
+        "Website",
+        "Email Address",
+        "LinkedIn",
+        "Facebook",
+        "Instagram",
+        "X / Twitter",
+        "Star Rating",
+        "Review Count",
+        "Opening Hours",
+        "Data Sources",
+        "Deduplication Status"
+      ];
+      const escapeCell = (val) => {
+        const s = String(val ?? "");
+        if (sep === "\t") return s.replace(/[\t\r\n]+/g, " ");
+        if (s.includes('"') || s.includes(",") || s.includes("\n")) {
+          return `"${s.replace(/"/g, '""')}"`;
+        }
+        return s;
+      };
+      const lines = [headers.map(escapeCell).join(sep)];
+      for (const r of currentProcessedRows) {
+        const soc = r.socials || {};
+        lines.push([
+          r.name,
+          r.category,
+          r.phone,
+          r.e164,
+          r.address,
+          r.website,
+          r.email,
+          soc.linkedin ? `https://${soc.linkedin}` : "",
+          soc.facebook ? `https://${soc.facebook}` : "",
+          soc.instagram ? `https://${soc.instagram}` : "",
+          soc.x ? `https://${soc.x}` : "",
+          r.rating.toFixed(1),
+          r.reviews,
+          r.hours,
+          r.sources.join(" + "),
+          r.dedupStatus
+        ].map(escapeCell).join(sep));
+      }
+      return lines.join("\r\n");
+    }
+
+    function slugifyCurrent() {
+      const q = document.getElementById("queryInput").value.trim() || "businesses";
+      const c = document.getElementById("cityInput").value.trim() || "sample";
+      return `${q}_${c}`.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+    }
+
+    document.getElementById("csvBtn").addEventListener("click", () => {
+      const csv = "\uFEFF" + buildTabularData(",");
+      const fname = `${slugifyCurrent()}_clean_sample_${currentProcessedRows.length}rows.csv`;
+      triggerDownload(fname, csv, "text/csv;charset=utf-8");
+      showToast(`Downloaded ${fname} (${currentProcessedRows.length} rows, Excel UTF-8 BOM)`);
+    });
+
+    document.getElementById("tsvBtn").addEventListener("click", () => {
+      const tsv = "\uFEFF" + buildTabularData("\t");
+      const fname = `${slugifyCurrent()}_excel_${currentProcessedRows.length}rows.tsv`;
+      triggerDownload(fname, tsv, "text/tab-separated-values;charset=utf-8");
+      showToast(`Downloaded ${fname} (Tab-delimited for Excel/Sheets)`);
+    });
+
+    function downloadPySpider() {
+      const ds = getActiveDataset();
+      const res = processPipeline(ds);
+      const py = buildSpiderPythonSource(ds, res);
+      triggerDownload("business_contact_spider.py", py, "text/x-python;charset=utf-8");
+      showToast("Downloaded business_contact_spider.py (Scrapy + Playwright)");
+    }
+
+    document.getElementById("pyBtn").addEventListener("click", downloadPySpider);
+    document.getElementById("pyBtn2").addEventListener("click", downloadPySpider);
+
+    document.getElementById("copyCodeBtn").addEventListener("click", async () => {
+      const code = document.getElementById("pythonCodeBox").textContent;
+      try {
+        await navigator.clipboard.writeText(code);
+        showToast("Copied business_contact_spider.py to clipboard!");
+      } catch {
+        showToast("Select code below or use Download .py File.");
+      }
+    });
+
+    // 5. Interactive Simulation Runner & Event Listeners
+    document.querySelectorAll(".preset-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const p = PRESETS[btn.dataset.preset];
+        if (!p) return;
+        document.getElementById("queryInput").value = p.query;
+        document.getElementById("cityInput").value = p.city;
+        runInteractiveSimulation();
+      });
+    });
+
+    ["robotsToggle", "enrichToggle", "dedupToggle", "jitterSelect", "proxySelect"].forEach(id => {
+      document.getElementById(id).addEventListener("change", renderWorkbench);
+    });
+
+    document.getElementById("searchBox").addEventListener("input", renderTableRows);
+
+    document.querySelectorAll(".chip-btn").forEach(chip => {
+      chip.addEventListener("click", () => {
+        activeRowFilter = chip.dataset.filter;
+        document.querySelectorAll(".chip-btn").forEach(c => {
+          c.setAttribute("aria-pressed", String(c === chip));
+        });
+        renderTableRows();
+      });
+    });
+
+    function runInteractiveSimulation() {
+      const wrap = document.getElementById("progressWrap");
+      const fill = document.getElementById("progressFill");
+      const step = document.getElementById("progressStep");
+      const q = document.getElementById("queryInput").value.trim() || "Business Leads";
+      const c = document.getElementById("cityInput").value.trim() || "Austin, TX";
+
+      wrap.classList.add("active");
+      const stages = [
+        [22, `[1/4] Checking robots.txt & initializing polite AutoThrottle session for "${q}" in ${c}...`],
+        [52, `[2/4] Extracting Google Maps Places cards + YellowPages/BBB LocalBusiness JSON-LD...`],
+        [82, `[3/4] Crawling business websites (/, /contact) for verified emails & LinkedIn/FB/IG/X links...`],
+        [100, `[4/4] Normalizing E.164 phones & root domains -> Deduplicating cross-source records...`]
+      ];
+
+      let idx = 0;
+      clearInterval(runInteractiveSimulation._timer);
+      fill.style.inlineSize = "10%";
+      step.textContent = stages[0][1];
+
+      runInteractiveSimulation._timer = setInterval(() => {
+        if (idx < stages.length) {
+          fill.style.inlineSize = stages[idx][0] + "%";
+          step.textContent = stages[idx][1];
+          idx++;
+        } else {
+          clearInterval(runInteractiveSimulation._timer);
+          renderWorkbench();
+          setTimeout(() => {
+            wrap.classList.remove("active");
+            fill.style.inlineSize = "0%";
+          }, 420);
+          showToast(`Sample extraction complete: ${currentProcessedRows.length} records ready!`);
+        }
+      }, 150);
+    }
+
+    document.getElementById("runBtn").addEventListener("click", runInteractiveSimulation);
+    ["queryInput", "cityInput"].forEach(id => {
+      document.getElementById(id).addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          runInteractiveSimulation();
+        }
+      });
+    });
+
+    // 6. Accessible Tabs with Selection-Follows-Focus & hidden="until-found" beforematch sync
+    const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+    const panels = tabs.map(t => document.getElementById(t.id.replace("tab-", "panel-")));
+
+    function selectTab(targetTab, moveFocus = false) {
+      tabs.forEach((tab, i) => {
+        const selected = tab === targetTab;
+        tab.setAttribute("aria-selected", String(selected));
+        tab.tabIndex = selected ? 0 : -1;
+        if (selected) {
+          panels[i].removeAttribute("hidden");
+        } else {
+          panels[i].setAttribute("hidden", "until-found");
+        }
+      });
+      if (moveFocus) targetTab.focus();
+      targetTab.scrollIntoView({ block: "nearest", inline: "nearest" });
+    }
+
+    tabs.forEach((tab, idx) => {
+      tab.addEventListener("click", () => selectTab(tab, false));
+      tab.addEventListener("keydown", (e) => {
+        let nextIdx = null;
+        if (e.key === "ArrowRight") nextIdx = (idx + 1) % tabs.length;
+        else if (e.key === "ArrowLeft") nextIdx = (idx - 1 + tabs.length) % tabs.length;
+        else if (e.key === "Home") nextIdx = 0;
+        else if (e.key === "End") nextIdx = tabs.length - 1;
+        if (nextIdx !== null) {
+          e.preventDefault();
+          selectTab(tabs[nextIdx], true);
+        }
+      });
+    });
+
+    panels.forEach((panel, idx) => {
+      panel.addEventListener("beforematch", () => selectTab(tabs[idx], false));
+    });
+
+    // Initial render
+    renderWorkbench();
+  </script>
+</body>
+</html>
