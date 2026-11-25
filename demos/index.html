@@ -6,23 +6,56 @@
   <meta name="color-scheme" content="light dark">
   <script>
     try {
-      const saved = localStorage.getItem("color-scheme");
-      if (saved) document.querySelector('meta[name="color-scheme"]').content = saved;
+      document.querySelector('meta[name="color-scheme"]').content = localStorage.getItem("color-scheme") ?? "light dark";
     } catch {}
   </script>
   <title>Live Engineering Prototypes &amp; Interactive Client Demos — Tran Hoang Tu</title>
-  <meta name="description" content="8 interactive zero-dependency web engineering workbenches: IoT Elderly Smart Medicine Box, Climate Econometrics, Tally Cloud MIS Sync, ASTRA Crypto Trading Adapter, Claude AI Risk Reporter, Live Bullion Terminal, Deriv Analyzer, and Multi-City Stock Radar.">
+  <meta name="description" content="8 interactive zero-dependency web engineering workbenches: RLHF AI Code Evaluation Workbench, Climate Econometrics, Tally Cloud MIS Sync, ASTRA Crypto Trading Adapter, Claude AI Risk Reporter, Live Bullion Terminal, Deriv Analyzer, and Multi-City Stock Radar.">
   <style>
     :root {
-      --bg: light-dark(#f8fafc, #090d16);
-      --surface: light-dark(#ffffff, #111827);
-      --surface-alt: light-dark(#f1f5f9, #1e293b);
-      --text: light-dark(#0f172a, #f8fafc);
-      --muted: light-dark(#475569, #94a3b8);
-      --border: light-dark(#cbd5e1, #334155);
-      --accent: light-dark(#0284c7, #38bdf8);
-      --accent-soft: light-dark(#e0f2fe, #0c4a6e);
+      --bg-light: #f8fafc; --bg-dark: #090d16;
+      --surface-light: #ffffff; --surface-dark: #111827;
+      --surface-alt-light: #f1f5f9; --surface-alt-dark: #1e293b;
+      --text-light: #0f172a; --text-dark: #f8fafc;
+      --muted-light: #475569; --muted-dark: #94a3b8;
+      --border-light: #cbd5e1; --border-dark: #334155;
+      --accent-light: #0369a1; --accent-dark: #38bdf8;
+      --accent-soft-light: #e0f2fe; --accent-soft-dark: #0c4a6e;
+      --bg: var(--bg-light); --surface: var(--surface-light); --surface-alt: var(--surface-alt-light);
+      --text: var(--text-light); --muted: var(--muted-light); --border: var(--border-light);
+      --accent: var(--accent-light); --accent-soft: var(--accent-soft-light);
       color-scheme: light dark;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: var(--bg-dark); --surface: var(--surface-dark); --surface-alt: var(--surface-alt-dark);
+        --text: var(--text-dark); --muted: var(--muted-dark); --border: var(--border-dark);
+        --accent: var(--accent-dark); --accent-soft: var(--accent-soft-dark);
+      }
+    }
+    :root:has(> head > meta[name="color-scheme"][content="dark"]) {
+      color-scheme: dark;
+      --bg: var(--bg-dark); --surface: var(--surface-dark); --surface-alt: var(--surface-alt-dark);
+      --text: var(--text-dark); --muted: var(--muted-dark); --border: var(--border-dark);
+      --accent: var(--accent-dark); --accent-soft: var(--accent-soft-dark);
+    }
+    :root:has(> head > meta[name="color-scheme"][content="light"]) {
+      color-scheme: light;
+      --bg: var(--bg-light); --surface: var(--surface-light); --surface-alt: var(--surface-alt-light);
+      --text: var(--text-light); --muted: var(--muted-light); --border: var(--border-light);
+      --accent: var(--accent-light); --accent-soft: var(--accent-soft-light);
+    }
+    @supports (color: light-dark(white, black)) {
+      :root {
+        --bg: light-dark(var(--bg-light), var(--bg-dark));
+        --surface: light-dark(var(--surface-light), var(--surface-dark));
+        --surface-alt: light-dark(var(--surface-alt-light), var(--surface-alt-dark));
+        --text: light-dark(var(--text-light), var(--text-dark));
+        --muted: light-dark(var(--muted-light), var(--muted-dark));
+        --border: light-dark(var(--border-light), var(--border-dark));
+        --accent: light-dark(var(--accent-light), var(--accent-dark));
+        --accent-soft: light-dark(var(--accent-soft-light), var(--accent-soft-dark));
+      }
     }
     *, *::before, *::after { box-sizing: border-box; }
     body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.55; }
@@ -57,11 +90,11 @@
     <div class="grid">
       <article class="card">
         <div>
-          <span class="tag">IoT Smart Pillbox · Voice + Vibrate + SMS</span>
-          <h2 style="margin:0;font-size:1.12rem;"><a href="/demos/elderly-medication-reminder/">💊 MedBox SeniorCare™ — Elderly Medication Box</a></h2>
-          <p style="color:var(--muted);font-size:0.9rem;margin:0.45rem 0 0;">Presbycusis-safe 850 Hz chime, Web Speech spoken reminders, haptic vibration, Hall-effect lid sensor tracking, Senior XL accessibility mode, and automated Caregiver Call/SMS missed-dose escalation.</p>
+          <span class="tag">SFT / RLHF · AI Code Evals</span>
+          <h2 style="margin:0;font-size:1.12rem;"><a href="/demos/rlhf-code-eval-workbench/">⚖️ RLHF &amp; SFT AI Code Evaluation Workbench</a></h2>
+          <p style="color:var(--muted);font-size:0.9rem;margin:0.45rem 0 0;">Side-by-side LLM Response A vs B code comparator with automated hallucinated-API &amp; Big-O risk scanner, 5-axis rubric scorer, 7-point Likert ranker, and 1-click DPO JSON / Markdown critique formatter.</p>
         </div>
-        <a href="/demos/elderly-medication-reminder/">Launch Smart MedBox →</a>
+        <a href="/demos/rlhf-code-eval-workbench/">Launch Eval Workbench →</a>
       </article>
 
       <article class="card">
@@ -129,12 +162,22 @@
     </div>
   </main>
   <script>
+    const metaScheme = document.querySelector('meta[name="color-scheme"]');
     document.getElementById("themeBtn").addEventListener("click", () => {
-      const meta = document.querySelector('meta[name="color-scheme"]');
-      const next = meta.content === "dark" ? "light" : "dark";
-      meta.content = next;
-      document.documentElement.style.colorScheme = next;
-      try { localStorage.setItem("color-scheme", next); } catch {}
+      const sysDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const cur = metaScheme.content;
+      const isDark = cur === "dark" || (cur !== "light" && sysDark);
+      const target = isDark ? "light" : "dark";
+      if (target === (sysDark ? "dark" : "light")) {
+        try { localStorage.removeItem("color-scheme"); } catch {}
+        metaScheme.content = "light dark";
+      } else {
+        try { localStorage.setItem("color-scheme", target); } catch {}
+        metaScheme.content = target;
+      }
+    });
+    window.addEventListener("storage", (ev) => {
+      if (ev.key === "color-scheme") metaScheme.content = ev.newValue ?? "light dark";
     });
   </script>
 </body>

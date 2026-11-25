@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <script>
+    try {
+      document.querySelector('meta[name="color-scheme"]').content = localStorage.getItem("color-scheme") ?? "light dark";
+    } catch {}
+  </script>
+  <title>RLHF &amp; SFT AI Code Evaluation Workbench — Side-by-Side Comparator &amp; Rubric Scorer</title>
+  <meta name="description" content="Zero-dependency interactive SFT/RLHF AI code evaluation workbench: side-by-side LLM Response A vs B comparator, static hallucination & complexity scanner, 5-axis rubric scorer, and DPO/Markdown critique formatter by Tran Hoang Tu.">
+  <style>
+    :root {
+      --bg-light: #f8fafc;
+      --bg-dark: #090d16;
+      --surface-light: #ffffff;
+      --surface-dark: #111827;
+      --surface-alt-light: #f1f5f9;
+      --surface-alt-dark: #1e293b;
+      --text-light: #0f172a;
+      --text-dark: #f8fafc;
+      --muted-light: #475569;
+      --muted-dark: #94a3b8;
+      --border-light: #cbd5e1;
+      --border-dark: #334155;
+      --accent-light: #0369a1;
+      --accent-dark: #38bdf8;
+      --accent-soft-light: #e0f2fe;
+      --accent-soft-dark: #0c4a6e;
+      --ok-bg-light: #dcfce7;
+      --ok-bg-dark: #064e3b;
+      --ok-fg-light: #166534;
+      --ok-fg-dark: #6ee7b7;
+      --warn-bg-light: #fef3c7;
+      --warn-bg-dark: #78350f;
+      --warn-fg-light: #92400e;
+      --warn-fg-dark: #fcd34d;
+      --err-bg-light: #fee2e2;
+      --err-bg-dark: #7f1d1d;
+      --err-fg-light: #991b1b;
+      --err-fg-dark: #fca5a5;
+
+      --bg: var(--bg-light);
+      --surface: var(--surface-light);
+      --surface-alt: var(--surface-alt-light);
+      --text: var(--text-light);
+      --muted: var(--muted-light);
+      --border: var(--border-light);
+      --accent: var(--accent-light);
+      --accent-soft: var(--accent-soft-light);
+      --ok-bg: var(--ok-bg-light);
+      --ok-fg: var(--ok-fg-light);
+      --warn-bg: var(--warn-bg-light);
+      --warn-fg: var(--warn-fg-light);
+      --err-bg: var(--err-bg-light);
+      --err-fg: var(--err-fg-light);
+
+      color-scheme: light dark;
+      accent-color: var(--accent);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: var(--bg-dark);
+        --surface: var(--surface-dark);
+        --surface-alt: var(--surface-alt-dark);
+        --text: var(--text-dark);
+        --muted: var(--muted-dark);
+        --border: var(--border-dark);
+        --accent: var(--accent-dark);
+        --accent-soft: var(--accent-soft-dark);
+        --ok-bg: var(--ok-bg-dark);
+        --ok-fg: var(--ok-fg-dark);
+        --warn-bg: var(--warn-bg-dark);
+        --warn-fg: var(--warn-fg-dark);
+        --err-bg: var(--err-bg-dark);
+        --err-fg: var(--err-fg-dark);
+      }
+    }
+
+    :root:has(> head > meta[name="color-scheme"][content="dark"]) {
+      color-scheme: dark;
+      --bg: var(--bg-dark);
+      --surface: var(--surface-dark);
+      --surface-alt: var(--surface-alt-dark);
+      --text: var(--text-dark);
+      --muted: var(--muted-dark);
+      --border: var(--border-dark);
+      --accent: var(--accent-dark);
+      --accent-soft: var(--accent-soft-dark);
+      --ok-bg: var(--ok-bg-dark);
+      --ok-fg: var(--ok-fg-dark);
+      --warn-bg: var(--warn-bg-dark);
+      --warn-fg: var(--warn-fg-dark);
+      --err-bg: var(--err-bg-dark);
+      --err-fg: var(--err-fg-dark);
+    }
+
+    :root:has(> head > meta[name="color-scheme"][content="light"]) {
+      color-scheme: light;
+      --bg: var(--bg-light);
+      --surface: var(--surface-light);
+      --surface-alt: var(--surface-alt-light);
+      --text: var(--text-light);
+      --muted: var(--muted-light);
+      --border: var(--border-light);
+      --accent: var(--accent-light);
+      --accent-soft: var(--accent-soft-light);
+      --ok-bg: var(--ok-bg-light);
+      --ok-fg: var(--ok-fg-light);
+      --warn-bg: var(--warn-bg-light);
+      --warn-fg: var(--warn-fg-light);
+      --err-bg: var(--err-bg-light);
+      --err-fg: var(--err-fg-light);
+    }
+
+    @supports (color: light-dark(white, black)) {
+      :root {
+        --bg: light-dark(var(--bg-light), var(--bg-dark));
+        --surface: light-dark(var(--surface-light), var(--surface-dark));
+        --surface-alt: light-dark(var(--surface-alt-light), var(--surface-alt-dark));
+        --text: light-dark(var(--text-light), var(--text-dark));
+        --muted: light-dark(var(--muted-light), var(--muted-dark));
+        --border: light-dark(var(--border-light), var(--border-dark));
+        --accent: light-dark(var(--accent-light), var(--accent-dark));
+        --accent-soft: light-dark(var(--accent-soft-light), var(--accent-soft-dark));
+        --ok-bg: light-dark(var(--ok-bg-light), var(--ok-bg-dark));
+        --ok-fg: light-dark(var(--ok-fg-light), var(--ok-fg-dark));
+        --warn-bg: light-dark(var(--warn-bg-light), var(--warn-bg-dark));
+        --warn-fg: light-dark(var(--warn-fg-light), var(--warn-fg-dark));
+        --err-bg: light-dark(var(--err-bg-light), var(--err-bg-dark));
+        --err-fg: light-dark(var(--err-fg-light), var(--err-fg-dark));
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    .wrap { max-inline-size: 1260px; margin-inline: auto; padding: 1.35rem 1.25rem 3.5rem; }
+    .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-block-end: 1rem; }
+    a { color: var(--accent); text-decoration: none; font-weight: 600; }
+    a:hover { text-decoration: underline; }
+    .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+
+    button, select, input, textarea {
+      font: inherit;
+      border-radius: 0.55rem;
+      border: 1px solid var(--border);
+      padding: 0.48rem 0.78rem;
+      background: var(--surface-alt);
+      color: var(--text);
+    }
+    button { cursor: pointer; font-weight: 600; }
+    button.primary { background: var(--accent); color: #ffffff; border-color: transparent; }
+    button.subtle { background: var(--surface); }
+
+    .preset-bar {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;
+      padding: 0.85rem 1rem; border-radius: 0.85rem; border: 1px solid var(--border);
+      background: var(--surface); margin-block-end: 1rem;
+    }
+    .preset-group { display: flex; gap: 0.45rem; flex-wrap: wrap; align-items: center; }
+    .preset-btn { font-size: 0.82rem; padding: 0.38rem 0.72rem; border-radius: 999px; }
+    .preset-btn.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)); gap: 0.75rem; margin-block-end: 1rem; }
+    .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 0.8rem; padding: 0.82rem 1rem; }
+    .kpi strong { display: block; font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+    .kpi span { font-size: 0.78rem; color: var(--muted); }
+
+    /* Single-row scrollable accessible tablist per modern-web-guidance `tabs` */
+    .tablist {
+      display: flex;
+      overflow-x: auto;
+      gap: 0.35rem;
+      border-block-end: 1px solid var(--border);
+      margin-block-end: 1rem;
+      scroll-snap-type: inline proximity;
+    }
+    [role="tab"] {
+      flex: none;
+      scroll-snap-align: start;
+      position: relative;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 0.5rem 0.5rem 0 0;
+      padding: 0.58rem 0.95rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    [role="tab"][aria-selected="true"] {
+      color: var(--accent);
+      background: var(--surface);
+    }
+    [role="tab"][aria-selected="true"]::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      border-block-end: 3px solid var(--accent);
+    }
+
+    /* Put panel styles on inner wrapper so hidden="until-found" renders zero empty strip */
+    .panel-stack { display: grid; }
+    [role="tabpanel"] { grid-area: 1 / 1; min-inline-size: 0; }
+    .panel-inner { display: flex; flex-direction: column; gap: 1rem; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.9rem;
+      padding: 1.1rem;
+    }
+    .card h2 { margin: 0 0 0.5rem; font-size: 1.05rem; }
+    .split { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 920px) { .split { grid-template-columns: 1fr; } }
+
+    .code-input {
+      inline-size: 100%;
+      min-block-size: 270px;
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      background: var(--surface-alt);
+    }
+    .prompt-input {
+      inline-size: 100%;
+      min-block-size: 78px;
+      resize: vertical;
+      font-size: 0.88rem;
+    }
+
+    .badge {
+      display: inline-block; padding: 0.16rem 0.55rem; border-radius: 999px;
+      font-size: 0.74rem; font-weight: 700;
+    }
+    .badge.ok { background: var(--ok-bg); color: var(--ok-fg); }
+    .badge.warn { background: var(--warn-bg); color: var(--warn-fg); }
+    .badge.err { background: var(--err-bg); color: var(--err-fg); }
+    .badge.info { background: var(--accent-soft); color: var(--accent); }
+
+    .finding-list { list-style: none; padding: 0; margin: 0.65rem 0 0; display: flex; flex-direction: column; gap: 0.45rem; }
+    .finding-item {
+      padding: 0.55rem 0.72rem; border-radius: 0.6rem; border: 1px solid var(--border);
+      background: var(--surface-alt); font-size: 0.82rem; display: flex; gap: 0.55rem; align-items: flex-start;
+    }
+
+    .rubric-row {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr 1fr;
+      gap: 0.9rem;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-block-end: 1px solid var(--border);
+    }
+    @media (max-width: 820px) { .rubric-row { grid-template-columns: 1fr; } }
+    .slider-box { display: flex; flex-direction: column; gap: 0.25rem; }
+    .slider-head { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+    input[type="range"] { inline-size: 100%; padding: 0; cursor: pointer; }
+
+    /* Progressive fallback for older browsers without accent-color support */
+    @supports not (accent-color: auto) {
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        background: transparent;
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        inline-size: 100%;
+        block-size: 8px;
+        background: linear-gradient(to right, var(--accent) var(--progress, 80%), var(--border) var(--progress, 80%));
+        border-radius: 4px;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        block-size: 16px;
+        inline-size: 16px;
+        border-radius: 50%;
+        background: var(--accent);
+        margin-block-start: -4px;
+      }
+      input[type="range"]::-moz-range-track {
+        inline-size: 100%;
+        block-size: 8px;
+        background: var(--border);
+        border-radius: 4px;
+      }
+      input[type="range"]::-moz-range-progress {
+        background-color: var(--accent);
+        block-size: 8px;
+        border-radius: 4px;
+      }
+      input[type="range"]::-moz-range-thumb {
+        block-size: 16px;
+        inline-size: 16px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+    }
+
+    .likert-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(95px, 1fr));
+      gap: 0.4rem;
+      overflow-x: auto;
+      margin-block-top: 0.55rem;
+    }
+    .likert-btn {
+      font-size: 0.76rem;
+      padding: 0.5rem 0.4rem;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .likert-btn.selected {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    .evidence-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.75rem; margin-block-top: 0.75rem; }
+    .evidence-grid label { display: flex; flex-direction: column; gap: 0.28rem; font-size: 0.81rem; font-weight: 600; color: var(--muted); }
+    .evidence-grid input { inline-size: 100%; font-weight: 500; color: var(--text); }
+
+    pre.output-box {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 0.95rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.81rem;
+      line-height: 1.52;
+      margin: 0.6rem 0 0;
+    }
+
+    /* Responsive table with container query stacked cards per modern-web-guidance `responsive-table` */
+    .table-wrapper {
+      overflow: auto;
+      max-inline-size: 100%;
+      container-type: inline-size;
+      border: 1px solid var(--border);
+      border-radius: 0.8rem;
+    }
+    table.platform-table {
+      inline-size: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.86rem;
+      --label-2: "Pay Range (USD)";
+      --label-3: "Vietnam Payout & Speed";
+      --label-4: "Assessment Focus";
+      --label-5: "Apply";
+    }
+    table.platform-table caption {
+      text-align: left;
+      font-weight: 700;
+      padding: 0.75rem 0.9rem;
+      background: var(--surface-alt);
+      border-block-end: 1px solid var(--border);
+    }
+    table.platform-table thead {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 1;
+      background: var(--surface-alt);
+    }
+    table.platform-table th,
+    table.platform-table td {
+      text-align: left;
+      padding: 0.68rem 0.85rem;
+      border-block-end: 1px solid var(--border);
+      vertical-align: top;
+    }
+    table.platform-table thead th {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    table.platform-table tbody th {
+      position: sticky;
+      inset-inline-start: 0;
+      background: var(--surface);
+      font-weight: 700;
+    }
+
+    @container (width < 680px) {
+      table.platform-table,
+      table.platform-table thead,
+      table.platform-table tbody,
+      table.platform-table tr,
+      table.platform-table th,
+      table.platform-table td {
+        display: block;
+      }
+      table.platform-table thead {
+        display: none;
+      }
+      table.platform-table tr {
+        margin: 0.65rem;
+        border: 1px solid var(--border);
+        border-radius: 0.65rem;
+        overflow: hidden;
+      }
+      table.platform-table tbody th {
+        position: sticky;
+        inset-block-start: 0;
+        z-index: 2;
+        background: var(--surface-alt);
+      }
+      table.platform-table td:nth-child(2)::before { content: var(--label-2) ": "; font-weight: 700; color: var(--muted); }
+      table.platform-table td:nth-child(3)::before { content: var(--label-3) ": "; font-weight: 700; color: var(--muted); }
+      table.platform-table td:nth-child(4)::before { content: var(--label-4) ": "; font-weight: 700; color: var(--muted); }
+      table.platform-table td:nth-child(5)::before { content: var(--label-5) ": "; font-weight: 700; color: var(--muted); }
+    }
+
+    .check-item {
+      display: flex; align-items: flex-start; gap: 0.7rem; padding: 0.72rem 0.85rem;
+      border: 1px solid var(--border); border-radius: 0.7rem; background: var(--surface-alt); margin-block-end: 0.55rem;
+    }
+    .check-item input[type="checkbox"] { inline-size: 1.12rem; block-size: 1.12rem; margin-block-start: 0.18rem; cursor: pointer; }
+
+    .toast {
+      position: fixed;
+      inset-block-end: 1.2rem;
+      inset-inline-end: 1.2rem;
+      background: var(--text);
+      color: var(--bg);
+      padding: 0.65rem 1rem;
+      border-radius: 0.6rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 50;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar">
+      <div>
+        <a href="/demos/">← All Interactive Demos</a>
+        <h1 style="margin:0.25rem 0 0;font-size:1.45rem;">⚖️ RLHF &amp; SFT AI Code Evaluation Workbench</h1>
+        <p style="margin:0.2rem 0 0;color:var(--muted);font-size:0.9rem;">
+          Side-by-Side LLM Code Comparator · Static Hallucination &amp; Complexity Scanner · 5-Axis Rubric Scorer · DPO / Critique Formatter.
+        </p>
+      </div>
+      <div class="actions">
+        <button id="themeBtn" class="subtle" type="button">🌓 Toggle Theme</button>
+        <button id="copyCritiqueTopBtn" type="button">📋 Copy Critique (.md)</button>
+        <button id="exportReportBtn" class="primary" type="button">📄 Export SFT/RLHF Bundle</button>
+      </div>
+    </header>
+
+    <section class="preset-bar" aria-label="Sample RLHF Calibration Scenarios">
+      <div class="preset-group">
+        <strong style="font-size:0.83rem;color:var(--muted);">Load Calibration Task:</strong>
+        <button class="preset-btn active" data-preset="python_ratelimit" type="button">🐍 Python Rate Limiter (O(N²) + Hallucinated API)</button>
+        <button class="preset-btn" data-preset="ts_webhook" type="button">🔐 TypeScript HMAC Verifier (Timing Side-Channel)</button>
+        <button class="preset-btn" data-preset="pandas_swebench" type="button">📊 SWE-Bench Pandas 2.0 (Removed API + Bad Test)</button>
+        <button class="preset-btn" data-preset="custom_blank" type="button">🧹 Blank Live Task</button>
+      </div>
+      <span id="activeTaskBadge" class="badge info">Python Stdlib · Sliding Window</span>
+    </section>
+
+    <section class="kpi-grid" aria-label="Live Evaluation Summary Metrics">
+      <div class="kpi">
+        <strong id="kpiVerdict" style="color:var(--ok-fg);">A is Much Better (1/7)</strong>
+        <span>Recommended Preference Ranking</span>
+      </div>
+      <div class="kpi">
+        <strong id="kpiScoreDelta">4.95 vs 1.85 (+3.10)</strong>
+        <span>Weighted Rubric Score (A vs B)</span>
+      </div>
+      <div class="kpi">
+        <strong id="kpiSignalsA" style="color:var(--ok-fg);">0 Risks · 4 Asserts</strong>
+        <span>Response A Static Audit</span>
+      </div>
+      <div class="kpi">
+        <strong id="kpiSignalsB" style="color:var(--err-fg);">3 Risks · 1 Assert</strong>
+        <span>Response B Static Audit</span>
+      </div>
+      <div class="kpi">
+        <strong id="kpiReadiness">100% Ready</strong>
+        <span>Pre-Flight Assessment Hygiene</span>
+      </div>
+    </section>
+
+    <div class="tablist" role="tablist" aria-label="RLHF Workbench Views">
+      <button type="button" role="tab" id="tab-compare" aria-selected="true" tabindex="0">🔍 1. Side-by-Side Code &amp; Defect Scanner</button>
+      <button type="button" role="tab" id="tab-rubric" aria-selected="false" tabindex="-1">📝 2. 5-Axis Rubric Scorer &amp; Critique Builder</button>
+      <button type="button" role="tab" id="tab-platforms" aria-selected="false" tabindex="-1">🌐 3. Verified 2026 RLHF Platforms &amp; Pre-Flight</button>
+    </div>
+
+    <div class="panel-stack">
+      <!-- PANEL 1: SIDE-BY-SIDE COMPARATOR & STATIC DEFECT SCANNER -->
+      <div role="tabpanel" id="panel-compare" aria-labelledby="tab-compare">
+        <div class="panel-inner">
+          <div class="card">
+            <label for="promptInput" style="display:block;font-weight:700;font-size:0.92rem;margin-block-end:0.4rem;">
+              User Coding Prompt &amp; Explicit Constraints
+            </label>
+            <textarea id="promptInput" class="prompt-input" spellcheck="false"></textarea>
+          </div>
+
+          <div class="split">
+            <div class="card">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-block-end:0.45rem;">
+                <h2 style="margin:0;"><label for="respAInput">Model Response A</label></h2>
+                <span id="metaBadgeA" class="badge ok">Clean · Self-Contained Tests</span>
+              </div>
+              <textarea id="respAInput" class="code-input" spellcheck="false"></textarea>
+              <ul id="findingsA" class="finding-list" aria-label="Response A Static Scan Findings"></ul>
+            </div>
+
+            <div class="card">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-block-end:0.45rem;">
+                <h2 style="margin:0;"><label for="respBInput">Model Response B</label></h2>
+                <span id="metaBadgeB" class="badge err">Defects Detected</span>
+              </div>
+              <textarea id="respBInput" class="code-input" spellcheck="false"></textarea>
+              <ul id="findingsB" class="finding-list" aria-label="Response B Static Scan Findings"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL 2: 5-AXIS RUBRIC SCORER & JUSTIFICATION FORMATTER -->
+      <div role="tabpanel" id="panel-rubric" aria-labelledby="tab-rubric" hidden="until-found">
+        <div class="panel-inner">
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+              <h2 style="margin:0;">Gold-Standard 5-Dimension RLHF Code-Review Rubric (1 = Severe Fail, 5 = Production Optimal)</h2>
+              <button id="autoSyncRubricBtn" class="subtle" type="button">⚡ Sync Scores from Static Scan</button>
+            </div>
+            <div id="rubricRowsContainer" style="margin-block-top:0.5rem;"></div>
+
+            <div style="margin-block-top:1rem;">
+              <strong style="font-size:0.88rem;">Side-by-Side Likert Preference Ranking (1–7 Scale):</strong>
+              <div id="likertContainer" class="likert-grid" role="group" aria-label="7-Point Preference Scale"></div>
+            </div>
+
+            <div class="evidence-grid">
+              <label>
+                Concrete Failing Counterexample / Input
+                <input id="counterexampleInput" type="text" placeholder="e.g. allow_request('u1', now=10.0) or mismatched digest length">
+              </label>
+              <label>
+                Response A Decisive Strength
+                <input id="strengthAInput" type="text" placeholder="e.g. Uses collections.deque for O(1) amortized eviction + 4 unit assertions">
+              </label>
+              <label>
+                Response B Root-Cause Defect
+                <input id="defectBInput" type="text" placeholder="e.g. Hallucinates time.monotonic_ms(), uses O(N) list.pop(0), and shares mutable default dict">
+              </label>
+            </div>
+          </div>
+
+          <div class="split">
+            <div class="card">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                <h2 style="margin:0;">Reviewer-Grade Justification Markdown</h2>
+                <button id="copyMarkdownBtn" class="primary" type="button">📋 Copy Markdown</button>
+              </div>
+              <pre id="critiquePreview" class="output-box"></pre>
+            </div>
+
+            <div class="card">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                <h2 style="margin:0;">DPO / SFT Preference Pair Payload (JSON)</h2>
+                <button id="copyJsonBtn" type="button">📦 Copy DPO JSON</button>
+              </div>
+              <pre id="dpoJsonPreview" class="output-box"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL 3: VERIFIED 2026 RLHF PLATFORMS & PRE-FLIGHT CHECKLIST -->
+      <div role="tabpanel" id="panel-platforms" aria-labelledby="tab-platforms" hidden="until-found">
+        <div class="panel-inner">
+          <div class="card">
+            <h2>Verified Per-Task Coding &amp; RLHF Platforms (Sorted by Fastest First Payout for Vietnam Engineers)</h2>
+            <div tabindex="0" role="region" aria-labelledby="platform-table-caption" class="table-wrapper">
+              <table class="platform-table">
+                <caption id="platform-table-caption">2026 Global Coding &amp; AI Evaluation Platforms Supporting PayPal / Payoneer / Vietnam Bank Payouts</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Platform &amp; Track</th>
+                    <th scope="col">Pay Range (USD)</th>
+                    <th scope="col">Vietnam Payout &amp; Speed</th>
+                    <th scope="col">Assessment Focus</th>
+                    <th scope="col">Apply</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">#1 DataAnnotation.tech<br><span class="badge ok">Fastest: 3-Day Payout</span></th>
+                    <td><strong>$40–$150+/hr</strong> (Coding &amp; STEM)<br><span style="color:var(--muted);font-size:0.79rem;">$25–$40/hr VN bilingual</span></td>
+                    <td><strong>PayPal (USD)</strong> — On-demand withdrawal every 3 days after batch approval (verified VN PayPal).</td>
+                    <td>Strict single-attempt Starter + Coding Assessment (no retakes): Python/JS/C++/Rust/Go data parsing, debugging LLM code, self-contained unit tests &amp; Markdown critiques.</td>
+                    <td><a href="https://www.dataannotation.tech/coders" target="_blank" rel="noopener">Apply →</a></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">#2 Outlier.ai<br><span class="badge info">Auto Weekly</span></th>
+                    <td><strong>$15–$33/hr</strong> (VN Coding Tier)<br><span style="color:var(--muted);font-size:0.79rem;">$40–$50+/hr Tier-1 Reviewer</span></td>
+                    <td><strong>AirTM (USDC → VN Bank/P2P) &amp; PayPal</strong> — Automatic weekly payout (Tue–Fri UTC).</td>
+                    <td>Resume + government ID KYC, timed coding screening &amp; sandbox RLHF vetting: debugging Python/JS/TS/Java/C++, A/B ranking, catching hallucinated APIs.</td>
+                    <td><a href="https://app.outlier.ai/en/expert/opportunities" target="_blank" rel="noopener">Apply →</a></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">#3 Alignerr<br><span class="badge info">Weekly Friday</span></th>
+                    <td><strong>$40–$120+/hr</strong> (Coding RLHF)<br><span style="color:var(--muted);font-size:0.79rem;">$20–$50/hr generalist</span></td>
+                    <td><strong>Deel (Payoneer, VN Bank Wire, Wise) + PayPal</strong> &amp; Stripe Connect — Weekly Friday payout.</td>
+                    <td>15–20 min Zara AI live conversational technical video interview on Chrome desktop + Labelbox calibration grading code correctness &amp; security.</td>
+                    <td><a href="https://app.alignerr.com" target="_blank" rel="noopener">Apply →</a></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">#4 Mercor<br><span class="badge info">Weekly + Paid Trial</span></th>
+                    <td><strong>$35–$150+/hr</strong> (SWE &amp; AI Evals)<br><span style="color:var(--muted);font-size:0.79rem;">$18–$22/hr VN-EN generalist</span></td>
+                    <td><strong>Wise &amp; Stripe Connect</strong> directly to Vietnam bank accounts — Weekly Friday payout.</td>
+                    <td>Clean text PDF resume + GitHub screening, ~20-min AI technical interview (no external AI/copy-paste), plus paid 4–6 hr trial evaluating Claude Code / Codex.</td>
+                    <td><a href="https://work.mercor.com" target="_blank" rel="noopener">Apply →</a></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">#5 Turing / Mindrift<br><span class="badge warn">Bi-Monthly</span></th>
+                    <td><strong>$20–$100+/hr</strong> (Turing)<br><span style="color:var(--muted);font-size:0.79rem;">$30–$90/hr eq. on Mindrift</span></td>
+                    <td><strong>Payoneer &amp; PayPal</strong> on Mindrift (5th &amp; 20th); <strong>USD SWIFT Wire</strong> on Turing (1st &amp; 16th).</td>
+                    <td>Timed Python challenge + SWE-bench Docker issue resolution, exhaustive <code>pytest</code> edge-case suites, catching reward-hacking patches.</td>
+                    <td><a href="https://mindrift.ai" target="_blank" rel="noopener">Mindrift →</a><br><a href="https://work.turing.com" target="_blank" rel="noopener">Turing →</a></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>First-Try Assessment &amp; KYC Pre-Flight Hygiene Checklist</h2>
+            <div id="checklistContainer">
+              <label class="check-item">
+                <input type="checkbox" class="preflight-chk" checked>
+                <span><strong>Zero VPN / Zero Proxy / Residential IP Only:</strong> Disable Cloudflare WARP, NordVPN, and corporate proxies so KYC location matches your Vietnam government ID 100%.</span>
+              </label>
+              <label class="check-item">
+                <input type="checkbox" class="preflight-chk" checked>
+                <span><strong>Clean ATS Resume + Live Proof Links Attached:</strong> Include <code>https://github.com/tranhoangtu-it</code> and <code>https://tranhoangtu-it.github.io/demos/</code> in a 1-page text-selectable PDF.</span>
+              </label>
+              <label class="check-item">
+                <input type="checkbox" class="preflight-chk" checked>
+                <span><strong>Verified Payout Rails Ready:</strong> Confirmed matching legal name across CCCD/Passport, verified Vietnam PayPal (USD), and Payoneer / Wise local VND receiving account.</span>
+              </label>
+              <label class="check-item">
+                <input type="checkbox" class="preflight-chk" checked>
+                <span><strong>Local Sandbox Execution Before Submitting:</strong> Execute every candidate snippet locally (<code>python3 -m unittest</code> / <code>node --test</code>) to verify assertions and catch hallucinated APIs.</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">Copied to clipboard</div>
+
+  <script>
+    (() => {
+      const SCENARIOS = {
+        python_ratelimit: {
+          badge: "Python Stdlib · Sliding Window",
+          prompt: "Implement a thread-safe per-user sliding-window rate limiter `RateLimiter(max_requests: int, window_seconds: float)` in Python 3.11+ using ONLY the Python standard library. Do not mutate caller-supplied arguments. Include self-contained unit tests covering empty/zero limits, boundary expiry, and multi-user isolation.",
+          respA: `from collections import deque
+import threading
+import time
+import unittest
+from typing import Callable, Deque, Dict
+
+
+class RateLimiter:
+    def __init__(
+        self,
+        max_requests: int,
+        window_seconds: float,
+        clock: Callable[[], float] = time.monotonic,
+    ) -> None:
+        if max_requests < 0 or window_seconds <= 0:
+            raise ValueError("max_requests must be >= 0 and window_seconds > 0")
+        self._max_requests = max_requests
+        self._window = window_seconds
+        self._clock = clock
+        self._lock = threading.Lock()
+        self._buckets: Dict[str, Deque[float]] = {}
+
+    def allow_request(self, user_id: str) -> bool:
+        if self._max_requests == 0:
+            return False
+        now = self._clock()
+        cutoff = now - self._window
+        with self._lock:
+            q = self._buckets.setdefault(user_id, deque())
+            while q and q[0] <= cutoff:
+                q.popleft()
+            if len(q) >= self._max_requests:
+                return False
+            q.append(now)
+            return True
+
+
+class TestRateLimiter(unittest.TestCase):
+    def test_sliding_window_and_boundary_expiry(self) -> None:
+        now = [100.0]
+        limiter = RateLimiter(2, 10.0, clock=lambda: now[0])
+        self.assertTrue(limiter.allow_request("u1"))
+        now[0] = 104.0
+        self.assertTrue(limiter.allow_request("u1"))
+        self.assertFalse(limiter.allow_request("u1"))
+        now[0] = 110.0  # Exact boundary: 110.0 - 10.0 == 100.0 expires first hit
+        self.assertTrue(limiter.allow_request("u1"))
+
+    def test_zero_limit_and_user_isolation(self) -> None:
+        zero = RateLimiter(0, 5.0)
+        self.assertFalse(zero.allow_request("u1"))
+        limiter = RateLimiter(1, 5.0, clock=lambda: 50.0)
+        self.assertTrue(limiter.allow_request("alice"))
+        self.assertTrue(limiter.allow_request("bob"))`,
+          respB: `import time
+
+class RateLimiter:
+    def __init__(self, max_requests, window_seconds, buckets={}):
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self.buckets = buckets
+
+    def allow_request(self, user_id):
+        now = time.monotonic_ms() / 1000.0
+        if user_id not in self.buckets:
+            self.buckets[user_id] = []
+        timestamps = self.buckets[user_id]
+        for ts in timestamps:
+            if now - ts > self.window_seconds:
+                timestamps.pop(0)
+        if len(timestamps) < self.max_requests:
+            timestamps.append(now)
+            return True
+        return False
+
+limiter = RateLimiter(2, 10)
+assert limiter.allow_request("u1") == True`,
+          scoresA: [5, 5, 5, 5, 5],
+          scoresB: [1, 2, 2, 1, 2],
+          likert: 1,
+          counterexample: "RateLimiter(2, 10).allow_request('u1') raises AttributeError: module 'time' has no attribute 'monotonic_ms'",
+          strengthA: "Uses collections.deque.popleft() for O(1) amortized eviction, threading.Lock() thread safety, injectable monotonic clock, and 7 deterministic unittest assertions",
+          defectB: "Hallucinates non-existent time.monotonic_ms() API, mutates timestamps list via O(N) pop(0) while iterating over it (skipping elements), lacks locking, and shares mutable default dict buckets={}"
+        },
+        ts_webhook: {
+          badge: "TypeScript / Node.js · Security & Crypto",
+          prompt: "Write a zero-dependency Node.js 20+ TypeScript function `verifyWebhookSignature(rawBody: Buffer, headerSig: string, secret: string): boolean` for `sha256=<hex>` HMAC headers that resists timing side-channel attacks and never throws on malformed or wrong-length signatures. Include `node:test` unit tests.",
+          respA: `import { createHmac, timingSafeEqual } from "node:crypto";
+import { describe, it } from "node:test";
+import assert from "node:assert/strict";
+
+export function verifyWebhookSignature(
+  rawBody: Buffer,
+  headerSig: string,
+  secret: string
+): boolean {
+  if (!secret || typeof headerSig !== "string" || !headerSig.startsWith("sha256=")) {
+    return false;
+  }
+  const hexPart = headerSig.slice("sha256=".length);
+  if (hexPart.length !== 64 || !/^[0-9a-fA-F]{64}$/.test(hexPart)) {
+    return false;
+  }
+  const actual = Buffer.from(hexPart, "hex");
+  const expected = createHmac("sha256", secret).update(rawBody).digest();
+  if (actual.byteLength !== expected.byteLength) {
+    return false;
+  }
+  return timingSafeEqual(actual, expected);
+}
+
+describe("verifyWebhookSignature", () => {
+  const body = Buffer.from('{"event":"invoice.paid"}', "utf8");
+  const secret = "whsec_live_test_key";
+  const validHex = createHmac("sha256", secret).update(body).digest("hex");
+
+  it("accepts valid signature and rejects tampered or truncated inputs safely", () => {
+    assert.equal(verifyWebhookSignature(body, \`sha256=\${validHex}\`, secret), true);
+    assert.equal(verifyWebhookSignature(body, "sha256=deadbeef", secret), false);
+    assert.equal(verifyWebhookSignature(body, "sha256=" + "z".repeat(64), secret), false);
+    assert.equal(verifyWebhookSignature(Buffer.from("{}"), \`sha256=\${validHex}\`, secret), false);
+  });
+});`,
+          respB: `import crypto from "crypto";
+
+export function verifyWebhookSignature(rawBody: Buffer, headerSig: string, secret: string): boolean {
+  const sig = headerSig.substr(7);
+  const expected = crypto.createHmac("sha256", secret).update(rawBody.toString()).digest("hex");
+  if (sig === expected) {
+    return true;
+  }
+  return crypto.timingSafeEqual(new Buffer(sig), new Buffer(expected));
+}
+
+console.assert(verifyWebhookSignature(Buffer.from("hi"), "sha256=abc", "sec") === false);`,
+          scoresA: [5, 5, 5, 5, 5],
+          scoresB: [1, 1, 4, 1, 2],
+          likert: 1,
+          counterexample: "verifyWebhookSignature(Buffer.from('hi'), 'sha256=abc', 'sec') throws RangeError: Input buffers must have the same byte length",
+          strengthA: "Validates 64-char hex format and equal byteLength before calling node:crypto timingSafeEqual on raw bytes, with 4 self-contained node:test assertions",
+          defectB: "Uses === string equality (leaking timing side-channel), calls deprecated String.substr() and deprecated new Buffer(), and crashes with RangeError in timingSafeEqual on truncated signatures"
+        },
+        pandas_swebench: {
+          badge: "Python Pandas 2.x · SWE-Bench Patch",
+          prompt: "Given a Pandas 2.2+ DataFrame `orders` with columns `['region', 'net_usd']` where `region` may contain `NaN` (unassigned), return a summary DataFrame with total `net_usd` per region (preserving `NaN` as `'UNASSIGNED'`) plus a final `'TOTAL'` row, sorted descending by `net_usd` (keeping `'TOTAL'` last). Include `pytest` tests.",
+          respA: `import pandas as pd
+
+
+def summarize_orders(orders: pd.DataFrame) -> pd.DataFrame:
+    if orders.empty:
+        return pd.DataFrame({"region": ["TOTAL"], "net_usd": [0.0]})
+
+    cleaned = orders.assign(
+        region=orders["region"].fillna("UNASSIGNED").astype(str),
+        net_usd=orders["net_usd"].astype(float),
+    )
+    grouped = (
+        cleaned.groupby("region", as_index=False, dropna=False)["net_usd"]
+        .sum()
+        .sort_values(by=["net_usd", "region"], ascending=[False, True], kind="mergesort")
+    )
+    total_row = pd.DataFrame({"region": ["TOTAL"], "net_usd": [float(grouped["net_usd"].sum())]})
+    return pd.concat([grouped, total_row], ignore_index=True)
+
+
+def test_summarize_orders_handles_nan_and_empty():
+    df = pd.DataFrame({"region": ["VN", None, "VN", "US"], "net_usd": [120.0, 50.0, 30.0, 80.0]})
+    res = summarize_orders(df)
+    assert list(res["region"]) == ["VN", "US", "UNASSIGNED", "TOTAL"]
+    assert list(res["net_usd"]) == [150.0, 80.0, 50.0, 280.0]
+
+    empty_res = summarize_orders(pd.DataFrame({"region": [], "net_usd": []}))
+    assert empty_res.to_dict("records") == [{"region": "TOTAL", "net_usd": 0.0}]`,
+          respB: `import pandas as pd
+
+def summarize_orders(orders: pd.DataFrame) -> pd.DataFrame:
+    grouped = orders.groupby("region", as_index=False)["net_usd"].sum()
+    grouped = grouped.sort_values("net_usd", ascending=False)
+    total = {"region": "TOTAL", "net_usd": orders["net_usd"].sum()}
+    return grouped.append(total, ignore_index=True)
+
+def test_summary():
+    df = pd.DataFrame({"region": ["VN", None], "net_usd": [100.0, 40.0]})
+    out = summarize_orders(df)
+    assert out["net_usd"].iloc[-1] == 100.0`,
+          scoresA: [5, 5, 5, 5, 5],
+          scoresB: [1, 1, 4, 1, 1],
+          likert: 1,
+          counterexample: "summarize_orders(df) raises AttributeError: 'DataFrame' object has no attribute 'append' in Pandas >= 2.0",
+          strengthA: "Replaces NaN with 'UNASSIGNED', uses Pandas 2.x compatible pd.concat(), handles empty DataFrames cleanly, and provides accurate pytest assertions",
+          defectB: "Calls DataFrame.append() (removed in Pandas 2.0), silently drops NaN regions in default groupby(), and writes a self-contradictory unit test expecting TOTAL=100.0 instead of 140.0"
+        },
+        custom_blank: {
+          badge: "Custom Live Task",
+          prompt: "",
+          respA: "",
+          respB: "",
+          scoresA: [4, 4, 4, 5, 4],
+          scoresB: [3, 3, 3, 4, 3],
+          likert: 3,
+          counterexample: "",
+          strengthA: "",
+          defectB: ""
+        }
+      };
+
+      const DIMENSIONS = [
+        { id: "correctness", label: "1. Correctness & Constraint Adherence", weight: 0.30 },
+        { id: "edge_cases", label: "2. Edge-Case & Boundary Handling", weight: 0.20 },
+        { id: "complexity", label: "3. Time & Space Complexity (Big-O)", weight: 0.20 },
+        { id: "api_hygiene", label: "4. Zero Hallucinated APIs & Security", weight: 0.15 },
+        { id: "unit_tests", label: "5. Self-Contained Unit Tests & Clarity", weight: 0.15 }
+      ];
+
+      const LIKERT_LABELS = [
+        { val: 1, short: "1 · A Much Better", prose: "Response A is much better than Response B" },
+        { val: 2, short: "2 · A Better", prose: "Response A is better than Response B" },
+        { val: 3, short: "3 · A Slightly Better", prose: "Response A is slightly better than Response B" },
+        { val: 4, short: "4 · About the Same", prose: "Response A and Response B perform about the same" },
+        { val: 5, short: "5 · B Slightly Better", prose: "Response B is slightly better than Response A" },
+        { val: 6, short: "6 · B Better", prose: "Response B is better than Response A" },
+        { val: 7, short: "7 · B Much Better", prose: "Response B is much better than Response A" }
+      ];
+
+      const STATIC_RULES = [
+        {
+          severity: "err",
+          test: (code) => /\btime\.monotonic_ms\s*\(/.test(code),
+          msg: "Hallucinated Python API: `time.monotonic_ms()` does not exist in Python stdlib (only `time.monotonic()` and `time.monotonic_ns()`)."
+        },
+        {
+          severity: "err",
+          test: (code) => /\.\s*append\s*\([^)]*ignore_index\s*=/.test(code),
+          msg: "Removed Pandas API: `DataFrame.append(..., ignore_index=True)` was removed in Pandas 2.0; use `pd.concat()`."
+        },
+        {
+          severity: "err",
+          test: (code) => /\bnew\s+Buffer\s*\(/.test(code),
+          msg: "Deprecated & unsafe Node API: `new Buffer()` is deprecated; use `Buffer.from()` or `Buffer.alloc()`."
+        },
+        {
+          severity: "warn",
+          test: (code) => /\.substr\s*\(/.test(code),
+          msg: "Legacy JS API: `String.prototype.substr()` is deprecated Annex B; prefer `.slice()` or `.substring()`."
+        },
+        {
+          severity: "err",
+          test: (code) => /def\s+\w+\s*\([^)]*=\s*(\[\]|\{\})/.test(code),
+          msg: "Mutable Default Argument Bug: `=[]` or `={}` persists state across calls/instances in Python."
+        },
+        {
+          severity: "warn",
+          test: (code) => /\.pop\s*\(\s*0\s*\)/.test(code),
+          msg: "Asymptotic Complexity Trap: `list.pop(0)` takes O(N) time (degrading loops to O(N²)); use `collections.deque.popleft()`."
+        },
+        {
+          severity: "err",
+          test: (code) => /createHmac[\s\S]{0,180}===\s*expected|sig\s*===\s*expected/.test(code),
+          msg: "Timing Side-Channel Vulnerability: Comparing HMAC digests with `===` leaks prefix timing; use `crypto.timingSafeEqual`."
+        },
+        {
+          severity: "err",
+          test: (code) => /\b(eval|exec)\s*\(|pickle\.loads\s*\(/.test(code),
+          msg: "Arbitrary Code Execution Risk: Unsafe `eval()`, `exec()`, or `pickle.loads()` detected."
+        },
+        {
+          severity: "warn",
+          test: (code) => /\bassert\s+True\b/.test(code),
+          msg: "Reward-Hacking Signal: Trivial `assert True` assertion provides zero verification coverage."
+        }
+      ];
+
+      const state = {
+        scoresA: [5, 5, 5, 5, 5],
+        scoresB: [1, 2, 2, 1, 2],
+        likert: 1,
+        manualLikert: false
+      };
+
+      const el = (id) => document.getElementById(id);
+      const toastEl = el("toast");
+      let toastTimer = null;
+
+      function showToast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2000);
+      }
+
+      /* Dark mode toggle following modern-web-guidance `dark-mode-toggle` two-state spec */
+      const metaScheme = document.querySelector('meta[name="color-scheme"]');
+      el("themeBtn").addEventListener("click", () => {
+        const sysDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const currentMeta = metaScheme.content;
+        const currentlyDark = currentMeta === "dark" || (currentMeta !== "light" && sysDark);
+        const target = currentlyDark ? "light" : "dark";
+        const sysScheme = sysDark ? "dark" : "light";
+
+        if (target === sysScheme) {
+          try { localStorage.removeItem("color-scheme"); } catch {}
+          metaScheme.content = "light dark";
+        } else {
+          try { localStorage.setItem("color-scheme", target); } catch {}
+          metaScheme.content = target;
+        }
+      });
+
+      window.addEventListener("storage", (ev) => {
+        if (ev.key === "color-scheme") {
+          metaScheme.content = ev.newValue ?? "light dark";
+        }
+      });
+
+      /* Accessible Tablist with selection-follows-focus + hidden="until-found" beforematch sync */
+      const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+      const panels = tabs.map((t) => el(t.id.replace("tab-", "panel-")));
+
+      function activateTab(selectedTab, moveFocus = false) {
+        tabs.forEach((tab, idx) => {
+          const isSelected = tab === selectedTab;
+          tab.setAttribute("aria-selected", String(isSelected));
+          tab.tabIndex = isSelected ? 0 : -1;
+          const panel = panels[idx];
+          if (isSelected) {
+            panel.removeAttribute("hidden");
+          } else {
+            panel.setAttribute("hidden", "until-found");
+          }
+        });
+        selectedTab.scrollIntoView({ block: "nearest", inline: "nearest" });
+        if (moveFocus) selectedTab.focus();
+      }
+
+      tabs.forEach((tab, idx) => {
+        tab.addEventListener("click", () => activateTab(tab, false));
+        tab.addEventListener("keydown", (e) => {
+          let nextIdx = null;
+          if (e.key === "ArrowRight") nextIdx = (idx + 1) % tabs.length;
+          else if (e.key === "ArrowLeft") nextIdx = (idx - 1 + tabs.length) % tabs.length;
+          else if (e.key === "Home") nextIdx = 0;
+          else if (e.key === "End") nextIdx = tabs.length - 1;
+          if (nextIdx !== null) {
+            e.preventDefault();
+            activateTab(tabs[nextIdx], true);
+          }
+        });
+        panels[idx].addEventListener("beforematch", () => activateTab(tab, false));
+      });
+
+      /* Build 5-Axis Rubric Sliders */
+      const rubricContainer = el("rubricRowsContainer");
+      const supportsAccent = typeof CSS !== "undefined" && CSS.supports("accent-color", "auto");
+
+      function syncRangeProgress(input) {
+        if (!supportsAccent) {
+          const pct = ((Number(input.value) - Number(input.min)) / (Number(input.max) - Number(input.min))) * 100;
+          input.style.setProperty("--progress", `${pct}%`);
+        }
+      }
+
+      DIMENSIONS.forEach((dim, idx) => {
+        const row = document.createElement("div");
+        row.className = "rubric-row";
+        row.innerHTML = `
+          <div>
+            <strong style="font-size:0.87rem;">${dim.label}</strong>
+            <div style="font-size:0.76rem;color:var(--muted);">Weight: ${Math.round(dim.weight * 100)}%</div>
+          </div>
+          <div class="slider-box">
+            <div class="slider-head">
+              <label for="sliderA-${idx}">Response A</label>
+              <span id="valA-${idx}">${state.scoresA[idx]} / 5</span>
+            </div>
+            <input id="sliderA-${idx}" type="range" min="1" max="5" step="1" value="${state.scoresA[idx]}">
+          </div>
+          <div class="slider-box">
+            <div class="slider-head">
+              <label for="sliderB-${idx}">Response B</label>
+              <span id="valB-${idx}">${state.scoresB[idx]} / 5</span>
+            </div>
+            <input id="sliderB-${idx}" type="range" min="1" max="5" step="1" value="${state.scoresB[idx]}">
+          </div>
+        `;
+        rubricContainer.appendChild(row);
+
+        const sA = row.querySelector(`#sliderA-${idx}`);
+        const sB = row.querySelector(`#sliderB-${idx}`);
+        syncRangeProgress(sA);
+        syncRangeProgress(sB);
+
+        sA.addEventListener("input", () => {
+          state.scoresA[idx] = Number(sA.value);
+          state.manualLikert = false;
+          syncRangeProgress(sA);
+          recomputeAll();
+        });
+        sB.addEventListener("input", () => {
+          state.scoresB[idx] = Number(sB.value);
+          state.manualLikert = false;
+          syncRangeProgress(sB);
+          recomputeAll();
+        });
+      });
+
+      /* Build 7-Point Likert Buttons */
+      const likertContainer = el("likertContainer");
+      LIKERT_LABELS.forEach((item) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "likert-btn";
+        btn.dataset.val = String(item.val);
+        btn.textContent = item.short;
+        btn.addEventListener("click", () => {
+          state.likert = item.val;
+          state.manualLikert = true;
+          recomputeAll();
+        });
+        likertContainer.appendChild(btn);
+      });
+
+      function scanResponse(code) {
+        const trimmed = code.trim();
+        if (!trimmed) {
+          return { risks: [], asserts: 0, lines: 0 };
+        }
+        const lines = trimmed.split("\n").length;
+        const assertMatches = trimmed.match(/\b(assert|assertEqual|assertTrue|assertFalse|assertRaises|assert\.equal|expect\s*\()/g);
+        const asserts = assertMatches ? assertMatches.length : 0;
+        const risks = [];
+        for (const rule of STATIC_RULES) {
+          if (rule.test(trimmed)) {
+            risks.push({ severity: rule.severity, msg: rule.msg });
+          }
+        }
+        if (asserts === 0) {
+          risks.push({ severity: "warn", msg: "Missing Self-Contained Unit Tests: Zero executable assertions (`assert` / `unittest` / `node:test`) detected." });
+        }
+        return { risks, asserts, lines };
+      }
+
+      function renderFindings(listEl, badgeEl, scan) {
+        listEl.innerHTML = "";
+        if (scan.lines === 0) {
+          badgeEl.className = "badge warn";
+          badgeEl.textContent = "Awaiting Code Input";
+          return;
+        }
+        const errCount = scan.risks.filter((r) => r.severity === "err").length;
+        const warnCount = scan.risks.filter((r) => r.severity === "warn").length;
+
+        if (errCount > 0) {
+          badgeEl.className = "badge err";
+          badgeEl.textContent = `${errCount} Critical · ${warnCount} Warn · ${scan.asserts} Asserts`;
+        } else if (warnCount > 0) {
+          badgeEl.className = "badge warn";
+          badgeEl.textContent = `${warnCount} Warning(s) · ${scan.asserts} Asserts`;
+        } else {
+          badgeEl.className = "badge ok";
+          badgeEl.textContent = `0 Static Risks · ${scan.asserts} Asserts · ${scan.lines} Lines`;
+        }
+
+        if (scan.risks.length === 0) {
+          const li = document.createElement("li");
+          li.className = "finding-item";
+          li.innerHTML = `<span class="badge ok">PASS</span><span>No hallucinated APIs, mutable default traps, or complexity anti-patterns flagged (${scan.asserts} test assertions present).</span>`;
+          listEl.appendChild(li);
+          return;
+        }
+
+        scan.risks.forEach((r) => {
+          const li = document.createElement("li");
+          li.className = "finding-item";
+          const label = r.severity === "err" ? "CRITICAL" : "WARN";
+          li.innerHTML = `<span class="badge ${r.severity}">${label}</span><span>${r.msg}</span>`;
+          listEl.appendChild(li);
+        });
+      }
+
+      function inferLikert(delta) {
+        if (delta >= 2.0) return 1;
+        if (delta >= 1.0) return 2;
+        if (delta >= 0.35) return 3;
+        if (delta > -0.35) return 4;
+        if (delta > -1.0) return 5;
+        if (delta > -2.0) return 6;
+        return 7;
+      }
+
+      function recomputeAll() {
+        const codeA = el("respAInput").value;
+        const codeB = el("respBInput").value;
+        const scanA = scanResponse(codeA);
+        const scanB = scanResponse(codeB);
+
+        renderFindings(el("findingsA"), el("metaBadgeA"), scanA);
+        renderFindings(el("findingsB"), el("metaBadgeB"), scanB);
+
+        let weightedA = 0;
+        let weightedB = 0;
+        DIMENSIONS.forEach((dim, idx) => {
+          weightedA += state.scoresA[idx] * dim.weight;
+          weightedB += state.scoresB[idx] * dim.weight;
+          el(`valA-${idx}`).textContent = `${state.scoresA[idx]} / 5`;
+          el(`valB-${idx}`).textContent = `${state.scoresB[idx]} / 5`;
+          const sA = el(`sliderA-${idx}`);
+          const sB = el(`sliderB-${idx}`);
+          sA.value = String(state.scoresA[idx]);
+          sB.value = String(state.scoresB[idx]);
+          syncRangeProgress(sA);
+          syncRangeProgress(sB);
+        });
+
+        const delta = weightedA - weightedB;
+        if (!state.manualLikert) {
+          state.likert = inferLikert(delta);
+        }
+
+        const likertObj = LIKERT_LABELS.find((l) => l.val === state.likert) || LIKERT_LABELS[0];
+        Array.from(likertContainer.children).forEach((btn) => {
+          const selected = Number(btn.dataset.val) === state.likert;
+          btn.classList.toggle("selected", selected);
+          btn.setAttribute("aria-pressed", String(selected));
+        });
+
+        /* Update KPIs */
+        const kpiVerdict = el("kpiVerdict");
+        kpiVerdict.textContent = `${likertObj.short.split("·")[1].trim()} (${state.likert}/7)`;
+        kpiVerdict.style.color = state.likert <= 3 ? "var(--ok-fg)" : state.likert === 4 ? "var(--warn-fg)" : "var(--accent)";
+
+        const sign = delta >= 0 ? "+" : "";
+        el("kpiScoreDelta").textContent = `${weightedA.toFixed(2)} vs ${weightedB.toFixed(2)} (${sign}${delta.toFixed(2)})`;
+
+        const kpiA = el("kpiSignalsA");
+        kpiA.textContent = `${scanA.risks.length} Risks · ${scanA.asserts} Asserts`;
+        kpiA.style.color = scanA.risks.some((r) => r.severity === "err") ? "var(--err-fg)" : scanA.risks.length ? "var(--warn-fg)" : "var(--ok-fg)";
+
+        const kpiB = el("kpiSignalsB");
+        kpiB.textContent = `${scanB.risks.length} Risks · ${scanB.asserts} Asserts`;
+        kpiB.style.color = scanB.risks.some((r) => r.severity === "err") ? "var(--err-fg)" : scanB.risks.length ? "var(--warn-fg)" : "var(--ok-fg)";
+
+        /* Build Structured Justification Markdown */
+        const counterexample = el("counterexampleInput").value.trim() || "boundary / empty input edge cases";
+        const strengthA = el("strengthAInput").value.trim() || (scanA.risks.length === 0
+          ? `Executes cleanly with optimal complexity and ${scanA.asserts} self-contained unit assertions`
+          : `Scores ${weightedA.toFixed(2)}/5.00 across rubric dimensions (${scanA.asserts} assertions)`);
+        const defectB = el("defectBInput").value.trim() || (scanB.risks.length > 0
+          ? scanB.risks.map((r) => r.msg).join(" ")
+          : `Scores ${weightedB.toFixed(2)}/5.00 (${scanB.asserts} assertions)`);
+
+        const dimBreakdown = DIMENSIONS.map(
+          (d, i) => `- **${d.label.slice(3)}:** Response A = **${state.scoresA[i]}/5** | Response B = **${state.scoresB[i]}/5**`
+        ).join("\n");
+
+        const winnerName = state.likert <= 3 ? "Response A" : state.likert >= 5 ? "Response B" : "Neither response (Tie)";
+        const critiqueMd = `**Overall Preference:** ${likertObj.prose} (Likert ${state.likert}/7 · Weighted Score: A = ${weightedA.toFixed(2)}/5.00 vs B = ${weightedB.toFixed(2)}/5.00).
+
+**Rubric Dimension Breakdown:**
+${dimBreakdown}
+
+**Response A Technical Evidence:**
+- ${strengthA}.
+- Static Audit: ${scanA.risks.length === 0 ? "0 hallucinated APIs or security defects flagged" : scanA.risks.map((r) => r.msg).join("; ")} (${scanA.asserts} unit test assertions).
+
+**Response B Technical Evidence:**
+- ${defectB}.
+- Reproducible Counterexample / Verification Trigger: \`${counterexample}\`.
+
+**Final Verdict:**
+${winnerName} is preferred because it adheres strictly to prompt constraints, avoids hallucinated or deprecated APIs, and verifies edge cases with runnable unit tests.`;
+
+        el("critiquePreview").textContent = critiqueMd;
+
+        const chosenIsA = state.likert <= 4;
+        const dpoPayload = {
+          schema: "sft_dpo_code_eval_v1",
+          likert_preference_1_to_7: state.likert,
+          verdict: likertObj.prose,
+          weighted_scores: {
+            response_a: Number(weightedA.toFixed(2)),
+            response_b: Number(weightedB.toFixed(2)),
+            delta_a_minus_b: Number(delta.toFixed(2))
+          },
+          rubric_scores: Object.fromEntries(
+            DIMENSIONS.map((d, i) => [d.id, { a: state.scoresA[i], b: state.scoresB[i], weight: d.weight }])
+          ),
+          prompt: el("promptInput").value.trim(),
+          chosen: chosenIsA ? "response_a" : "response_b",
+          rejected: chosenIsA ? "response_b" : "response_a",
+          counterexample,
+          justification_markdown: critiqueMd
+        };
+        el("dpoJsonPreview").textContent = JSON.stringify(dpoPayload, null, 2);
+      }
+
+      function loadScenario(key) {
+        const sc = SCENARIOS[key];
+        if (!sc) return;
+        document.querySelectorAll(".preset-btn").forEach((b) => {
+          b.classList.toggle("active", b.dataset.preset === key);
+        });
+        el("activeTaskBadge").textContent = sc.badge;
+        el("promptInput").value = sc.prompt;
+        el("respAInput").value = sc.respA;
+        el("respBInput").value = sc.respB;
+        state.scoresA = [...sc.scoresA];
+        state.scoresB = [...sc.scoresB];
+        state.likert = sc.likert;
+        state.manualLikert = true;
+        el("counterexampleInput").value = sc.counterexample;
+        el("strengthAInput").value = sc.strengthA;
+        el("defectBInput").value = sc.defectB;
+        recomputeAll();
+      }
+
+      document.querySelectorAll(".preset-btn").forEach((btn) => {
+        btn.addEventListener("click", () => loadScenario(btn.dataset.preset));
+      });
+
+      ["promptInput", "respAInput", "respBInput", "counterexampleInput", "strengthAInput", "defectBInput"].forEach((id) => {
+        el(id).addEventListener("input", recomputeAll);
+      });
+
+      el("autoSyncRubricBtn").addEventListener("click", () => {
+        const deriveScores = (scan) => {
+          const errs = scan.risks.filter((r) => r.severity === "err").length;
+          const warns = scan.risks.filter((r) => r.severity === "warn").length;
+          const corr = errs > 0 ? 1 : warns > 0 ? 3 : 5;
+          const edge = errs > 0 ? 2 : scan.asserts >= 3 ? 5 : 3;
+          const comp = scan.risks.some((r) => r.msg.includes("Complexity")) ? 2 : 5;
+          const api = errs > 0 ? 1 : 5;
+          const tests = scan.asserts >= 3 ? 5 : scan.asserts >= 1 ? 3 : 1;
+          return [corr, edge, comp, api, tests];
+        };
+        state.scoresA = deriveScores(scanResponse(el("respAInput").value));
+        state.scoresB = deriveScores(scanResponse(el("respBInput").value));
+        state.manualLikert = false;
+        recomputeAll();
+        showToast("Synced 5-axis rubric scores from static scan");
+      });
+
+      async function copyText(text, label) {
+        try {
+          await navigator.clipboard.writeText(text);
+          showToast(`Copied ${label}`);
+        } catch {
+          showToast("Clipboard blocked — select text manually");
+        }
+      }
+
+      el("copyMarkdownBtn").addEventListener("click", () => copyText(el("critiquePreview").textContent, "Justification Markdown"));
+      el("copyCritiqueTopBtn").addEventListener("click", () => copyText(el("critiquePreview").textContent, "Justification Markdown"));
+      el("copyJsonBtn").addEventListener("click", () => copyText(el("dpoJsonPreview").textContent, "DPO JSON Payload"));
+
+      el("exportReportBtn").addEventListener("click", () => {
+        const md = `# SFT / RLHF Code Evaluation Report\n\n## Prompt\n\n${el("promptInput").value.trim()}\n\n## Critique & Rubric Verdict\n\n${el("critiquePreview").textContent}\n\n## DPO Structured JSON\n\n\`\`\`json\n${el("dpoJsonPreview").textContent}\n\`\`\`\n`;
+        const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "rlhf-code-evaluation-report.md";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        showToast("Downloaded rlhf-code-evaluation-report.md");
+      });
+
+      /* Pre-Flight Readiness Checklist */
+      const checks = Array.from(document.querySelectorAll(".preflight-chk"));
+      function updateReadiness() {
+        const done = checks.filter((c) => c.checked).length;
+        const pct = Math.round((done / checks.length) * 100);
+        const rEl = el("kpiReadiness");
+        rEl.textContent = `${pct}% Ready (${done}/${checks.length})`;
+        rEl.style.color = pct === 100 ? "var(--ok-fg)" : "var(--warn-fg)";
+      }
+      checks.forEach((c) => c.addEventListener("change", updateReadiness));
+
+      loadScenario("python_ratelimit");
+      updateReadiness();
+    })();
+  </script>
+</body>
+</html>
